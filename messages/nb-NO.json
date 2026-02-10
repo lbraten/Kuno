@@ -1,0 +1,39 @@
+{
+  "appName": "Kuno",
+  "demo": {
+    "banner": "Kuno (frontend-demo): Dette er en testmodell uten ekte data eller backend. Innholdet er simulert."
+  },
+  "chat": {
+    "inputPlaceholder": "Skriv en melding...",
+    "disclaimer": "Kuno kan gjøre feil. Dobbeltsjekk viktig informasjon.",
+    "thinking": "tenker...",
+    "you": "Du",
+    "followUps": "Foreslåtte oppfølgingsspørsmål:",
+    "noMessages": "Start en samtale ved å skrive en melding nedenfor."
+  },
+  "sidebar": {
+    "history": "Historikk",
+    "newConversation": "Ny samtale",
+    "mode": "Modus",
+    "filters": "Filtre"
+  },
+  "insight": {
+    "sources": "Kilder",
+    "chunks": "Tekstutdrag",
+    "quality": "Kvalitetsnotat"
+  },
+  "modes": {
+    "chat": {
+      "label": "Chat",
+      "description": "Samtale med kontekstuell forståelse"
+    },
+    "retrieve": {
+      "label": "Søk",
+      "description": "Finn relevante dokumenter"
+    },
+    "advanced": {
+      "label": "Avansert",
+      "description": "Finjuster søk og innstillinger"
+    }
+  }
+}
