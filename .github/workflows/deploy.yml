@@ -32,7 +32,7 @@ jobs:
 
       - name: Build
         env:
-          NEXT_PUBLIC_BASE_PATH: /REPO_NAME
+          NEXT_PUBLIC_BASE_PATH: /Kuno
         run: npm run build
 
       - name: Upload artifact
