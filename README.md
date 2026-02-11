@@ -2,12 +2,12 @@
 
 En komplett frontend-demo av Kuno chatbot bygget med Next.js, TypeScript og Tailwind CSS.
 
-## 🎯 Formål
+## Formål
 
-Dette er en **ren frontend-demo** designet for å demonstrere UI/UX, interaksjoner, tilgjengelighet og flyt. 
+Dette er en ren frontend-demo designet for å demonstrere UI/UX, interaksjoner, tilgjengelighet og flyt. 
 Ingen backend, ingen API-kall, ingen ekte data – alt er mocket og simulert lokalt i klienten.
 
-## 🚀 Kom i gang
+## Kom i gang
 
 ### Forutsetninger
 
@@ -32,7 +32,7 @@ npm start
 
 Åpne [http://localhost:3000](http://localhost:3000) i nettleseren.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: Next.js 15 (App Router)
 - **Språk**: TypeScript
@@ -43,7 +43,7 @@ npm start
 - **Ikoner**: Lucide React
 - **i18n**: next-intl (nb-NO)
 
-## ✨ Funksjoner
+## Funksjoner
 
 ### Layout
 - **Demo-banner**: Alltid synlig øverst for å indikere at dette er en demo
@@ -53,19 +53,19 @@ npm start
 - **Høyre panel**: Kilder, tekstutdrag, kvalitetsnotater
 
 ### Funksjoner
-- ✅ Simulert chat-streaming (ord-for-ord)
-- ✅ Mock kilder med relevans-score
-- ✅ Usikkerhetsindikatorer (lav/middels/høy)
-- ✅ Filtre (virksomhet, år, dokumenttype)
-- ✅ Tre modi: Chat, Søk, Avansert
-- ✅ Historikk med samtaler
-- ✅ Light/Dark/System tema
-- ✅ Responsivt design (mobil-først)
-- ✅ Kommandopalett (⌘K / Ctrl+K)
-- ✅ Tilgjengelighetsfunksjoner (ARIA, keyboard nav)
-- ✅ Respekterer prefers-reduced-motion
+- Simulert chat-streaming (ord-for-ord)
+- Mock kilder med relevans-score
+- Usikkerhetsindikatorer (lav/middels/høy)
+- Filtre (virksomhet, år, dokumenttype)
+- Tre modi: Chat, Søk, Avansert
+- Historikk med samtaler
+- Light/Dark/System tema
+- Responsivt design (mobil-først)
+- Kommandopalett (⌘K / Ctrl+K)
+- Tilgjengelighetsfunksjoner (ARIA, keyboard nav)
+- Respekterer prefers-reduced-motion
 
-## 📁 Prosjektstruktur
+## Prosjektstruktur
 
 ```
 src/
@@ -104,7 +104,7 @@ src/
     └── index.ts            # TypeScript typer
 ```
 
-## 🎨 Design System
+## Design System
 
 ### Fargepalett
 - **Primær**: Blå (#2563EB)
@@ -120,7 +120,7 @@ src/
 - Dark mode
 - System (følger OS-preferanse)
 
-## 🔍 Nøkkelfunksjoner
+## Nøkkelfunksjoner
 
 ### Simulert Streaming
 Chat-responser streames ord-for-ord med `setInterval` for å simulere en ekte AI-respons.
@@ -140,25 +140,25 @@ All data (samtaler, kilder, chunks) er hardkodet i `src/lib/mock-data.ts`. Ingen
 - Screen reader support
 - Respekterer `prefers-reduced-motion`
 
-## 🌍 Internasjonalisering
+## Internasjonalisering
 
 Prosjektet bruker `next-intl` med norsk bokmål (nb-NO) som standard språk.
 Oversettelser finnes i `messages/nb-NO.json`.
 
-## 📱 Responsivt Design
+## Responsivt Design
 
 - **Mobil (<768px)**: Sidebars er skuffer som kan åpnes/lukkes
 - **Tablet (768px-1024px)**: Sidebar synlig, insight panel kan skjules
 - **Desktop (>1024px)**: Full layout med alle paneler synlige
 
-## ⚡ Ytelse
+## Ytelse
 
 - Server-side rendering med Next.js App Router
 - Optimalisert bundle med code splitting
 - Lazy loading av komponenter hvor relevant
 - Optimaliserte animasjoner
 
-## 🧪 Testing (Valgfritt)
+## Testing
 
 Prosjektet er satt opp for testing med:
 - Playwright for e2e-testing
@@ -169,11 +169,11 @@ Prosjektet er satt opp for testing med:
 npm test
 ```
 
-## 📝 Lisens
+## Lisens
 
 Privat demo-prosjekt.
 
-## 👨‍💻 Utvikling
+## Utvikling
 
 Utviklet som en komplett frontend-demo for å demonstrere moderne React/Next.js-praksis,
 tilgjengelighet, og brukeropplevelse uten avhengighet av backend-tjenester.
