@@ -1,5 +1,7 @@
 # Kuno - Frontend Demo
 
+![Kuno logo](public/branding/Kuno-logo.svg)
+
 En komplett frontend-demo av Kuno chatbot bygget med Next.js, TypeScript og Tailwind CSS.
 
 ## Formål

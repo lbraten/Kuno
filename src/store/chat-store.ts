@@ -119,6 +119,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         createdAt: new Date().toISOString(),
       };
 
+      set({ messages: [...newMessages, assistantMessage] });
+
       // Simulate streaming word by word
       const words = mockResponse.split(" ");
       for (let i = 0; i < words.length; i++) {
