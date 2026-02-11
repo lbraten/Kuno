@@ -24,12 +24,19 @@ import { useUIStore } from "@/store/ui-store";
 export default function Home() {
   const { messages, isStreaming, createConversation, currentConversationId } =
     useChatStore();
-  const { setInsightPanelOpen } = useUIStore();
+  const { setInsightPanelOpen, setSidebarOpen } = useUIStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const isMdUp = window.innerWidth >= 768;
+    const isLgUp = window.innerWidth >= 1024;
+    setSidebarOpen(isMdUp);
+    setInsightPanelOpen(isLgUp);
+  }, [setInsightPanelOpen, setSidebarOpen]);
 
   const hasMessages = messages.length > 0;
 
