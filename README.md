@@ -11,31 +11,6 @@ En komplett frontend-demo av Kuno chatbot bygget med Next.js, TypeScript og Tail
 Dette er en ren frontend-demo designet for å demonstrere UI/UX, interaksjoner, tilgjengelighet og flyt. 
 Ingen backend, ingen API-kall, ingen ekte data – alt er mocket og simulert lokalt i klienten.
 
-## Kom i gang
-
-### Forutsetninger
-
-- Node.js 18+ 
-- npm, pnpm, yarn eller bun
-
-### Installasjon
-
-```bash
-# Installer avhengigheter
-npm install
-
-# Kjør utviklingsserver
-npm run dev
-
-# Bygg for produksjon
-npm run build
-
-# Start produksjonsserver
-npm start
-```
-
-Åpne [http://localhost:3000](http://localhost:3000) i nettleseren.
-
 ## Tech Stack
 
 - **Framework**: Next.js 15 (App Router)
@@ -51,7 +26,7 @@ npm start
 
 ### Layout
 - **Demo-banner**: Alltid synlig øverst for å indikere at dette er en demo
-- **Toppbar**: Logo, søk (⌘K), tema-bryter, innstillinger
+- **Toppbar**: Logo, søk, tema-bryter, innstillinger
 - **Venstre sidebar**: Historikk, modus-velger, filtre
 - **Hovedområde**: Chat med meldinger, oppfølgingsspørsmål, streaming
 - **Høyre panel**: Kilder, tekstutdrag, kvalitetsnotater
@@ -65,7 +40,7 @@ npm start
 - Historikk med samtaler
 - Light/Dark/System tema
 - Responsivt design (mobil-først)
-- Kommandopalett (⌘K / Ctrl+K)
+- Kommandopalett (Ctrl+K / ⌘K)
 - Tilgjengelighetsfunksjoner (ARIA, keyboard nav)
 - Respekterer prefers-reduced-motion
 
