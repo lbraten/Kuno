@@ -1,6 +1,7 @@
 "use client";
 
-import { Menu, MessageSquare, Settings, Moon, Sun, Monitor } from "lucide-react";
+import { Menu, Settings, Moon, Sun, Monitor } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/store/ui-store";
 import {
@@ -15,10 +16,33 @@ export function TopBar() {
   const { theme, setTheme, toggleSidebar, setCommandPaletteOpen } =
     useUIStore();
   const [mounted, setMounted] = useState(false);
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (theme !== "system") {
+      setResolvedTheme(theme);
+      return;
+    }
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const updateTheme = () => {
+      setResolvedTheme(media.matches ? "dark" : "light");
+    };
+
+    updateTheme();
+
+    if (media.addEventListener) {
+      media.addEventListener("change", updateTheme);
+      return () => media.removeEventListener("change", updateTheme);
+    }
+
+    media.addListener(updateTheme);
+    return () => media.removeListener(updateTheme);
+  }, [theme]);
 
   const cycleTheme = () => {
     if (theme === "light") setTheme("dark");
@@ -47,7 +71,17 @@ export function TopBar() {
         </Button>
 
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-6 w-6 text-primary" />
+          <Image
+            src={
+              resolvedTheme === "dark"
+                ? "/branding/Kuno-logo-white.svg"
+                : "/branding/Kuno-logo.svg"
+            }
+            alt="Kuno logo"
+            width={24}
+            height={24}
+            className="h-6 w-6"
+          />
           <h1 className="text-xl font-semibold">Kuno</h1>
         </div>
 

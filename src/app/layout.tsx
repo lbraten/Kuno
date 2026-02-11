@@ -7,8 +7,18 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Kuno - Frontend Demo",
+  title: "Kuno - Demo",
   description: "En frontend-demo av Kuno chatbot",
+  icons: {
+    icon: [
+      { url: "/branding/Kuno-logo.svg", type: "image/svg+xml" },
+      {
+        url: "/branding/Kuno-logo-white.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
