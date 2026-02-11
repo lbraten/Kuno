@@ -34,7 +34,7 @@ export function ChatInput() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Skriv en melding..."
             disabled={isStreaming}
-            className="flex-1"
+            className="flex-1 text-base sm:text-sm"
             aria-label="Chat input"
           />
           {isStreaming ? (
