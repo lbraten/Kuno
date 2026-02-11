@@ -36,7 +36,7 @@ export function Message({ message }: MessageProps) {
           "flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full",
           isUser
             ? "bg-primary text-primary-foreground"
-            : "bg-petrol text-white"
+            : "bg-petrol-800 text-white"
         )}
       >
         {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
@@ -82,7 +82,7 @@ export function Message({ message }: MessageProps) {
             {message.citations.map((citation) => (
               <button
                 key={citation.id}
-                className="text-xs bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded transition-colors"
+                className="text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-secondary/60 px-2 py-1 rounded transition-colors"
                 onClick={() => {
                   // In a real app, this would scroll to the source
                 }}

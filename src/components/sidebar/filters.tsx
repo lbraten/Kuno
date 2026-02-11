@@ -56,7 +56,7 @@ export function Filters() {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Filtre</h3>
         {activeFilterCount > 0 && (
-          <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+          <span className="text-xs bg-secondary text-secondary-foreground border border-secondary/60 px-2 py-0.5 rounded-full">
             {activeFilterCount}
           </span>
         )}
@@ -110,8 +110,8 @@ export function Filters() {
                     className={cn(
                       "px-3 py-1 rounded-full text-sm border transition-colors",
                       filter.years.includes(year)
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-input hover:bg-accent"
+                        ? "bg-primary text-primary-foreground border-primary/70 hover:bg-primary/85"
+                        : "border-input hover:bg-secondary/70 hover:border-primary/30"
                     )}
                   >
                     {year}
@@ -157,7 +157,7 @@ export function Filters() {
           {filter.organizations.slice(0, 2).map((org) => (
             <div
               key={org}
-              className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate"
+              className="text-xs bg-secondary text-secondary-foreground border border-secondary/60 px-2 py-1 rounded truncate"
             >
               {org}
             </div>

@@ -3,7 +3,7 @@
 export function LoadingDots() {
   return (
     <div className="flex items-center gap-3 px-4 py-6">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-petrol text-white">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-petrol-800 text-white">
         <svg
           className="h-4 w-4"
           xmlns="http://www.w3.org/2000/svg"
