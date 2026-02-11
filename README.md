@@ -107,16 +107,17 @@ src/
 ## Design System
 
 ### Fargepalett
-- **Primær**: Blå (#2563EB)
-- **Aksent**: Petrol (#1F6B75)
-- **Nøytral**: Grå-toner for bakgrunn og tekst
+- **Primær**: Grønn (CSS-variabel `--primary`: 149.6 28.1% 49.6%)
+- **Aksent**: Lys grønn (CSS-variabel `--accent`: 148 41.7% 85.9%)
+- **Petrol**: Egendefinert skala i Tailwind (`petrol`, bl.a. #76C69D / #5BA27E)
+- **Nøytral**: Lyse/mørke gråtoner fra `--background` og `--foreground`
 
 ### Typografi
 - **Font**: Inter (med system fallback)
 - **Skala**: Tailwind standard
 
 ### Tema
-- Light mode
+- Light mode (standard når ingen lagret preferanse finnes)
 - Dark mode
 - System (følger OS-preferanse)
 
@@ -147,8 +148,8 @@ Oversettelser finnes i `messages/nb-NO.json`.
 
 ## Responsivt Design
 
-- **Mobil (<768px)**: Sidebars er skuffer som kan åpnes/lukkes
-- **Tablet (768px-1024px)**: Sidebar synlig, insight panel kan skjules
+- **Mobil (<768px)**: Sidebar og innsiktspanel starter lukket
+- **Tablet (768px-1024px)**: Sidebar synlig, innsiktspanel kan skjules
 - **Desktop (>1024px)**: Full layout med alle paneler synlige
 
 ## Ytelse
@@ -160,14 +161,7 @@ Oversettelser finnes i `messages/nb-NO.json`.
 
 ## Testing
 
-Prosjektet er satt opp for testing med:
-- Playwright for e2e-testing
-- Vitest/React Testing Library for komponententesting
-
-```bash
-# Kjør tester (når implementert)
-npm test
-```
+Testing er ikke konfigurert ennå.
 
 ## Lisens
 
