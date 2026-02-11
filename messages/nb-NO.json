@@ -5,7 +5,7 @@
   },
   "chat": {
     "inputPlaceholder": "Skriv en melding...",
-    "disclaimer": "Kuno kan gjøre feil. Dobbeltsjekk viktig informasjon.",
+    "disclaimer": "Kuno kan gjøre feil. Dobbeltsjekk viktig informasjon. (NB! Dette er bare en demo med simulert data.)",
     "thinking": "tenker...",
     "you": "Du",
     "followUps": "Foreslåtte oppfølgingsspørsmål:",

@@ -59,7 +59,7 @@ export function ChatInput() {
           )}
         </div>
         <p className="text-xs text-muted-foreground mt-2 text-center">
-          Kuno kan gjøre feil. Dobbeltsjekk viktig informasjon.
+          Kuno kan gjøre feil. Dobbeltsjekk viktig informasjon. (NB! Dette er bare en demo med simulert data.)
         </p>
       </form>
     </div>
