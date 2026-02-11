@@ -1,21 +1,21 @@
 export const mockConversations = [
   {
     id: "conv-1",
-    title: "Hva er klimaavtalen i Paris?",
+    title: "Hva sier regelverket om mobbing?",
     createdAt: "2026-02-08T10:30:00Z",
     updatedAt: "2026-02-08T10:35:00Z",
     messages: [],
   },
   {
     id: "conv-2",
-    title: "Retningslinjer for avfallshåndtering",
+    title: "Hvordan beregnes fravær i videregående?",
     createdAt: "2026-02-07T14:20:00Z",
     updatedAt: "2026-02-07T14:28:00Z",
     messages: [],
   },
   {
     id: "conv-3",
-    title: "Forskrifter om byggesaksbehandling",
+    title: "Gjennomføring av eksamen og klage",
     createdAt: "2026-02-05T09:15:00Z",
     updatedAt: "2026-02-05T09:22:00Z",
     messages: [],
@@ -23,11 +23,11 @@ export const mockConversations = [
 ];
 
 export const mockOrganizations = [
-  "Direktoratet for byggkvalitet",
-  "Miljødirektoratet",
-  "Helsedirektoratet",
+  "Utdanningsdirektoratet",
+  "Kunnskapsdepartementet",
+  "Barneombudet",
   "Statsforvalteren",
-  "Kommunal- og moderniseringsdepartementet",
+  "Skoleeier",
 ];
 
 export const mockYears = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
@@ -37,14 +37,14 @@ export const mockDocTypes = [
   "Veileder",
   "Rundskriv",
   "Rapport",
-  "Høringsnotat",
+  "Horing",
 ];
 
 export const mockCitations = [
   {
     id: "cite-1",
-    title: "Plan- og bygningsloven § 12-4",
-    organization: "Direktoratet for byggkvalitet",
+    title: "Opplæringsloven kapittel 9 A (elevenes skolemiljø)",
+    organization: "Utdanningsdirektoratet",
     year: 2024,
     docType: "Forskrift",
     chunkId: "chunk-1",
@@ -52,8 +52,8 @@ export const mockCitations = [
   },
   {
     id: "cite-2",
-    title: "Veileder: Søknad om byggetillatelse",
-    organization: "Direktoratet for byggkvalitet",
+    title: "Veileder: Mobbing og krenkelser i skolen",
+    organization: "Utdanningsdirektoratet",
     year: 2023,
     docType: "Veileder",
     chunkId: "chunk-2",
@@ -61,8 +61,8 @@ export const mockCitations = [
   },
   {
     id: "cite-3",
-    title: "Avfallsforskriften kapittel 11",
-    organization: "Miljødirektoratet",
+    title: "Forskrift om fravær i videregående opplæring",
+    organization: "Kunnskapsdepartementet",
     year: 2025,
     docType: "Forskrift",
     chunkId: "chunk-3",
@@ -72,25 +72,25 @@ export const mockCitations = [
 
 export const mockChunks: Record<string, string> = {
   "chunk-1":
-    "§ 12-4. Søknad om tillatelse\n\nTiltak etter § 1-2 og § 1-3 krever tillatelse (rammetillatelse, igangsettingstillatelse, midlertidig brukstillatelse og ferdigattest) fra kommunen. Tillatelse fra kommunen er ikke nødvendig når annet er bestemt i lov eller i medhold av lov.\n\nSøknad om tillatelse skal undertegnes av tiltakshaver og skal følges av nødvendige planer, tegninger og beskrivelser, samt kopi av nabovarsel etter § 21-3.",
+    "Kapittel 9 A. Elevenes skolemiljø\n\nSkolen skal aktivt og systematisk arbeide for at alle elever har et trygt og godt skolemiljø som fremmer helse, trivsel og læring. Elever som opplever utrygghet eller krenkelser har rett til at skolen handler raskt og setter inn tiltak.",
   "chunk-2":
-    "Veiledning for søknad om byggetillatelse:\n\n1. Planlegging: Før du søker, undersøk om tiltaket krever dispensasjon fra reguleringsplan.\n2. Dokumentasjon: Søknaden må inneholde situasjonsplan, fasadetegninger, plantegninger og snitt.\n3. Nabovarsel: Send varsel til naboer og legg ved dokumentasjon på dette i søknaden.\n4. Ansvarsrett: Oppgi hvem som har ansvarsrett (SØK, PRO, UTF, KONTROLL).",
+    "Veiledning om mobbing og krenkelser:\n\n1. Varsling: Alle ansatte skal melde fra ved mistanke om krenkelser.\n2. Undersøkelse: Skolen skal snarest mulig kartlegge elevens opplevelse.\n3. Tiltak: Det skal settes inn konkrete og evaluerbare tiltak.\n4. Oppfølging: Skolen må sikre at tiltakene virker over tid.",
   "chunk-3":
-    "Kapittel 11. Avfall fra bygg- og anleggsvirksomhet\n\n§ 11-1. Virkeområde\nDette kapitlet gjelder avfall fra bygg- og anleggsvirksomhet, herunder avfall fra riving, rehabilitering og oppføring av bygninger og anlegg.\n\n§ 11-2. Kildesortering\nAvfall fra bygg- og anleggsvirksomhet skal kildesorteres i følgende fraksjoner: tre, metall, plast, gips, betong, tegl, papp/papir, farlig avfall og restavfall.",
+    "Fravær i videregående opplæring:\n\nFravær skal føres på vitnemål og kompetansebevis. Dokumentert fravær kan unntas innenfor fastsatte grenser. Skolen skal informere elevene om regler for dokumentasjon og frister.",
 };
 
 export const mockFollowUps = [
-  "Hva kreves av dokumentasjon ved søknad?",
-  "Hvem kan ha ansvarsrett?",
-  "Hva er forskjellen på ramme- og igangsettingstillatelse?",
-  "Hvordan sender jeg nabovarsel?",
+  "Hva skal skolen gjøre ved mistanke om mobbing?",
+  "Hvilken dokumentasjon teller for fravær?",
+  "Hvordan beregnes fraværsgrensen?",
+  "Hva er klagefristen etter eksamen?",
 ];
 
 export const mockAssistantResponses = [
-  "Basert på gjeldende forskrifter krever tiltak etter plan- og bygningsloven tillatelse fra kommunen. Dette inkluderer rammetillatelse, igangsettingstillatelse, midlertidig brukstillatelse og ferdigattest.",
-  "For å søke om byggetillatelse må du innlevere en søknad med nødvendige planer, tegninger og beskrivelser. Søknaden skal undertegnes av tiltakshaver og følges av kopi av nabovarsel.",
-  "Avfall fra bygg- og anleggsvirksomhet skal kildesorteres i ulike fraksjoner som tre, metall, plast, gips, betong, tegl, papp/papir, farlig avfall og restavfall, i henhold til avfallsforskriften kapittel 11.",
-  "Jeg har funnet relevant informasjon om dette i gjeldende regelverk. La meg forklare de viktigste punktene.",
+  "Skolen har en plikt til å sikre et trygt og godt skolemiljø. Ved mistanke om mobbing skal skolen undersøke, sette inn tiltak og følge opp at tiltakene virker.",
+  "Fravær i videregående skal føres på vitnemål, men dokumentert fravær kan unntas innenfor gjeldende regler. Elevene må informeres om krav til dokumentasjon.",
+  "Ved eksamen gjelder egne regler for gjennomføring og klage. Klagefristen og prosessen skal framgå av skolens informasjon til elevene.",
+  "Jeg har funnet relevant informasjon i gjeldende regelverk og veiledere. Her er de viktigste punktene.",
 ];
 
 export const uncertaintyExplanations = {

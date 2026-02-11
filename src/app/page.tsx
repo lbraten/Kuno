@@ -75,9 +75,9 @@ export default function Home() {
                   <div className="pt-8 text-sm text-muted-foreground">
                     <p className="mb-2">Eksempler du kan prøve:</p>
                     <ul className="space-y-1">
-                      <li>• Hva kreves for å søke byggetillatelse?</li>
-                      <li>• Fortell meg om avfallsforskriften</li>
-                      <li>• Hvilke krav gjelder for nabovarsel?</li>
+                      <li>• Hva er skolens plikter ved mobbing?</li>
+                      <li>• Hvordan beregnes fravær i videregående?</li>
+                      <li>• Hva er klagefristen etter eksamen?</li>
                     </ul>
                   </div>
                 </div>
