@@ -3,7 +3,8 @@
 import { Message as MessageType } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
-import { User, Bot, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
+import { User, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import {
@@ -39,7 +40,17 @@ export function Message({ message }: MessageProps) {
             : "bg-petrol-800 text-white"
         )}
       >
-        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+        {isUser ? (
+          <User className="h-4 w-4" />
+        ) : (
+          <Image
+            src="/branding/Kuno-logo-white-solid.svg"
+            alt="Kuno"
+            width={16}
+            height={16}
+            className="h-4 w-4"
+          />
+        )}
       </div>
 
       <div className="flex-1 space-y-2 overflow-hidden">
