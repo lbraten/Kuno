@@ -5,8 +5,55 @@ type ChatRequestBody = {
   history?: Array<{ role: "user" | "assistant"; content: string }>;
 };
 
+type Uncertainty = "low" | "medium" | "high";
+
+type FilterDetail = {
+  filtered?: boolean;
+  severity?: string;
+};
+
+type ContentFilterResults = Record<string, FilterDetail | undefined>;
+
+function getUncertaintyFromFilters(filters?: ContentFilterResults): Uncertainty {
+  if (!filters) return "low";
+
+  let hasNonSafeSeverity = false;
+
+  for (const value of Object.values(filters)) {
+    if (!value) continue;
+    if (value.filtered) return "high";
+
+    const severity = value.severity?.toLowerCase();
+    if (severity && severity !== "safe") {
+      hasNonSafeSeverity = true;
+    }
+  }
+
+  return hasNonSafeSeverity ? "medium" : "low";
+}
+
 const DEFAULT_SYSTEM_PROMPT =
   "Du er Kuno, en hjelpsom assistent for skole- og utdanningssporsmal i Norge. Svar kort, strukturert og pa norsk bokmal.";
+
+function getFoundryConfig() {
+  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+  const apiKey = process.env.AZURE_OPENAI_API_KEY;
+  const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
+  const apiVersion = process.env.AZURE_OPENAI_API_VERSION ?? "2024-10-21";
+
+  return {
+    endpoint,
+    apiKey,
+    deployment,
+    apiVersion,
+    configured: Boolean(endpoint && apiKey && deployment),
+  };
+}
+
+export async function GET() {
+  const { configured } = getFoundryConfig();
+  return NextResponse.json({ foundryConfigured: configured });
+}
 
 export async function POST(request: Request) {
   try {
@@ -20,12 +67,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-    const apiKey = process.env.AZURE_OPENAI_API_KEY;
-    const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
-    const apiVersion = process.env.AZURE_OPENAI_API_VERSION ?? "2024-10-21";
+    const { endpoint, apiKey, deployment, apiVersion, configured } =
+      getFoundryConfig();
 
-    if (!endpoint || !apiKey || !deployment) {
+    if (!configured || !endpoint || !apiKey || !deployment) {
       return NextResponse.json(
         {
           error:
@@ -72,14 +117,21 @@ export async function POST(request: Request) {
     }
 
     const data = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
+      choices?: Array<{
+        message?: { content?: string };
+        content_filter_results?: ContentFilterResults;
+      }>;
     };
 
     const content =
       data.choices?.[0]?.message?.content?.trim() ||
       "Jeg fikk ikke et gyldig svar fra modellen.";
 
-    return NextResponse.json({ content });
+    const uncertainty = getUncertaintyFromFilters(
+      data.choices?.[0]?.content_filter_results
+    );
+
+    return NextResponse.json({ content, uncertainty });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Ukjent runtime-feil";

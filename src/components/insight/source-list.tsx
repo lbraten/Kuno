@@ -8,6 +8,12 @@ import { Citation } from "@/types";
 export function SourceList() {
   const { messages } = useChatStore();
 
+  const latestAssistantMessage = [...messages]
+    .reverse()
+    .find((m) => m.role === "assistant");
+  const isFoundryWithoutSources =
+    latestAssistantMessage?.source === "foundry";
+
   // Get all unique citations from messages
   const citations = messages
     .filter((m) => m.role === "assistant" && m.citations)
@@ -20,7 +26,9 @@ export function SourceList() {
   if (citations.length === 0) {
     return (
       <div className="text-sm text-muted-foreground text-center py-8">
-        Ingen kilder ennå. Start en samtale for å se kilder.
+        {isFoundryWithoutSources
+          ? "Ingen kilder fra modellen i denne modusen. Foundry-chat henter ikke automatisk fra nett eller kunnskapsbase uten eget oppsett."
+          : "Ingen kilder ennå. Start en samtale for å se kilder."}
       </div>
     );
   }

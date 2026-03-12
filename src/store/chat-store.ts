@@ -1,5 +1,12 @@
 import { create } from "zustand";
-import { Message, Conversation, Filter, Mode, RetrieveConfig } from "@/types";
+import {
+  Message,
+  Conversation,
+  Filter,
+  Mode,
+  RetrieveConfig,
+  Citation,
+} from "@/types";
 import {
   mockConversations,
   mockCitations,
@@ -7,6 +14,49 @@ import {
   mockFollowUps,
 } from "@/lib/mock-data";
 import { sleep } from "@/lib/utils";
+
+type Uncertainty = "low" | "medium" | "high";
+
+function getMockTopicConfig(content: string): {
+  responseIndex: number;
+  citationIds: string[];
+  uncertainty: Uncertainty;
+} {
+  const lower = content.toLowerCase();
+
+  if (lower.includes("mobb") || lower.includes("skolemilj")) {
+    return { responseIndex: 0, citationIds: ["cite-1", "cite-2", "cite-8"], uncertainty: "low" };
+  }
+  if (lower.includes("frav")) {
+    return { responseIndex: 1, citationIds: ["cite-3", "cite-9"], uncertainty: "medium" };
+  }
+  if (lower.includes("eksamen") || lower.includes("klage")) {
+    return { responseIndex: 2, citationIds: ["cite-10", "cite-7", "cite-14"], uncertainty: "medium" };
+  }
+  if (lower.includes("spesialundervis")) {
+    return { responseIndex: 3, citationIds: ["cite-4", "cite-11"], uncertainty: "medium" };
+  }
+  if (lower.includes("barnehage") || lower.includes("overgang")) {
+    return { responseIndex: 4, citationIds: ["cite-5", "cite-12"], uncertainty: "medium" };
+  }
+  if (lower.includes("orden") || lower.includes("oppf") || lower.includes("ungdomsskole")) {
+    return { responseIndex: 5, citationIds: ["cite-6", "cite-13"], uncertainty: "medium" };
+  }
+  if (lower.includes("tilrettelegging")) {
+    return { responseIndex: 6, citationIds: ["cite-7", "cite-14"], uncertainty: "medium" };
+  }
+
+  return {
+    responseIndex: mockAssistantResponses.length - 1,
+    citationIds: ["cite-1"],
+    uncertainty: "high",
+  };
+}
+
+function pickCitationsById(ids: string[]): Citation[] {
+  const idSet = new Set(ids);
+  return mockCitations.filter((citation) => idSet.has(citation.id));
+}
 
 interface ChatState {
   conversations: Conversation[];
@@ -120,7 +170,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         throw new Error(errorData?.error ?? "Klarte ikke aa hente svar fra API");
       }
 
-      const payload = (await response.json()) as { content?: string };
+      const payload = (await response.json()) as {
+        content?: string;
+        uncertainty?: Uncertainty;
+      };
       const assistantText =
         payload.content?.trim() || "Jeg fikk ikke noe svar fra modellen.";
 
@@ -129,11 +182,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         role: "assistant",
         content: "",
         source: "foundry",
-        citations: mockCitations.slice(0, Math.floor(Math.random() * 3) + 1),
-        uncertainty: ["low", "medium", "high"][Math.floor(Math.random() * 3)] as
-          | "low"
-          | "medium"
-          | "high",
+        citations: [],
+        uncertainty: payload.uncertainty ?? "low",
         createdAt: new Date().toISOString(),
       };
 
@@ -176,18 +226,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
       }
     } catch (error) {
-      const mockResponse =
-        mockAssistantResponses[
-          Math.floor(Math.random() * mockAssistantResponses.length)
-        ];
+      const topicConfig = getMockTopicConfig(content);
+      const mockResponse = mockAssistantResponses[topicConfig.responseIndex];
+      const mockCitationsForTopic = pickCitationsById(topicConfig.citationIds);
 
       const fallbackMessage: Message = {
         id: `msg-${Date.now()}-assistant-fallback`,
         role: "assistant",
         content: "",
         source: "mock",
-        citations: mockCitations.slice(0, 1),
-        uncertainty: "medium",
+        citations: mockCitationsForTopic,
+        uncertainty: topicConfig.uncertainty,
         createdAt: new Date().toISOString(),
       };
 

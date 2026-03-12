@@ -11,6 +11,12 @@ export function ChunkViewer() {
   const { messages } = useChatStore();
   const [expandedChunks, setExpandedChunks] = useState<Set<string>>(new Set());
 
+  const latestAssistantMessage = [...messages]
+    .reverse()
+    .find((m) => m.role === "assistant");
+  const isFoundryWithoutChunks =
+    latestAssistantMessage?.source === "foundry";
+
   // Get all unique chunk IDs from citations
   const chunkIds = messages
     .filter((m) => m.role === "assistant" && m.citations)
@@ -32,7 +38,9 @@ export function ChunkViewer() {
   if (chunkIds.length === 0) {
     return (
       <div className="text-sm text-muted-foreground text-center py-8">
-        Ingen tekstutdrag tilgjengelig ennå.
+        {isFoundryWithoutChunks
+          ? "Ingen tekstutdrag tilgjengelig. Utdrag vises først nar du kobler til en kunnskapskilde/retrieval."
+          : "Ingen tekstutdrag tilgjengelig ennå."}
       </div>
     );
   }
