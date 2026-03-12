@@ -78,6 +78,18 @@ export function Message({ message }: MessageProps) {
               {message.uncertainty === "high" && "Lav sikkerhet"}
             </span>
           )}
+          {message.source && !isUser && (
+            <span
+              className={cn(
+                "text-xs px-2 py-0.5 rounded-full",
+                message.source === "foundry"
+                  ? "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200"
+                  : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+              )}
+            >
+              {message.source === "foundry" ? "AI Foundry" : "Mock data"}
+            </span>
+          )}
         </div>
 
         <div className="prose prose-sm dark:prose-invert max-w-none">

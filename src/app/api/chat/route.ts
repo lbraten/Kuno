@@ -81,8 +81,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ content });
   } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Ukjent runtime-feil";
+
     return NextResponse.json(
-      { error: "Uventet feil ved kall mot Foundry" },
+      {
+        error: "Uventet feil ved kall mot Foundry",
+        details: message,
+      },
       { status: 500 }
     );
   }

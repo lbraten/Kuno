@@ -128,6 +128,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         id: `msg-${Date.now()}-assistant`,
         role: "assistant",
         content: "",
+        source: "foundry",
         citations: mockCitations.slice(0, Math.floor(Math.random() * 3) + 1),
         uncertainty: ["low", "medium", "high"][Math.floor(Math.random() * 3)] as
           | "low"
@@ -184,6 +185,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         id: `msg-${Date.now()}-assistant-fallback`,
         role: "assistant",
         content: "",
+        source: "mock",
         citations: mockCitations.slice(0, 1),
         uncertainty: "medium",
         createdAt: new Date().toISOString(),

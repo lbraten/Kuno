@@ -16,6 +16,7 @@ export interface Message {
   content: string;
   citations?: Citation[];
   uncertainty?: "low" | "medium" | "high";
+  source?: "foundry" | "mock";
   createdAt: string;
 }
 
