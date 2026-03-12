@@ -8,8 +8,25 @@ En komplett frontend-demo av Kuno chatbot bygget med Next.js, TypeScript og Tail
 
 ## Formål
 
-Dette er en ren frontend-demo designet for å demonstrere UI/UX, interaksjoner, tilgjengelighet og flyt. 
-Ingen backend, ingen API-kall, ingen ekte data – alt er mocket og simulert lokalt i klienten.
+Dette er en frontend-fokusert demo designet for å demonstrere UI/UX, interaksjoner, tilgjengelighet og flyt.
+Den fungerer med mock-data out-of-the-box, og kan kobles til Azure AI Foundry via en sikker server-endpoint i Next.js.
+
+## Koble til Azure AI Foundry
+
+1. Opprett filen `.env.local` i prosjektroten (du kan kopiere fra `.env.local.example`).
+2. Sett verdier for:
+    - `AZURE_OPENAI_ENDPOINT`
+    - `AZURE_OPENAI_API_KEY`
+    - `AZURE_OPENAI_DEPLOYMENT`
+    - `AZURE_OPENAI_API_VERSION` (valgfritt, standard er `2024-10-21`)
+3. Start appen med `npm run dev`.
+4. Send en melding i chatten. Frontend kaller da `POST /api/chat`, som videresender sikkert til Foundry.
+
+### Viktig sikkerhet
+
+- API-nokkel ligger kun pa serveren (i `.env.local`), ikke i browser-kode.
+- Klienten kaller kun lokal Next.js-route (`src/app/api/chat/route.ts`).
+- Ikke bruk `NEXT_PUBLIC_` for hemmelige nøkler.
 
 ## Tech Stack
 

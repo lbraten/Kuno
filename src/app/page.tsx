@@ -68,7 +68,7 @@ export default function Home() {
                 <div className="max-w-2xl text-center space-y-6">
                   <h2 className="text-3xl font-bold">Velkommen til Kuno</h2>
                   <p className="text-muted-foreground text-lg">
-                    Frontend-demo av Kuno med UI og interaksjoner. Alt innhold er lokalt simulert uten backend.
+                    Frontend-demo av Kuno med UI og interaksjoner. Kan kjores med mock-data eller kobles til Azure AI Foundry.
                   </p>
                   <Button
                     size="lg"

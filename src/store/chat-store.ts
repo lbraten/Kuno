@@ -92,20 +92,37 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ conversations: updatedConvs });
     }
 
-    // Simulate streaming response
+    // Keep local abort support and progressive rendering in UI.
     const controller = new AbortController();
     set({ abortController: controller });
 
     try {
-      await sleep(800);
-
       if (controller.signal.aborted) return;
 
-      // Create assistant message with mock data
-      const mockResponse =
-        mockAssistantResponses[
-          Math.floor(Math.random() * mockAssistantResponses.length)
-        ];
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: content,
+          history: messages
+            .filter((m) => m.role === "user" || m.role === "assistant")
+            .map((m) => ({ role: m.role, content: m.content })),
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(errorData?.error ?? "Klarte ikke aa hente svar fra API");
+      }
+
+      const payload = (await response.json()) as { content?: string };
+      const assistantText =
+        payload.content?.trim() || "Jeg fikk ikke noe svar fra modellen.";
 
       const assistantMessage: Message = {
         id: `msg-${Date.now()}-assistant`,
@@ -121,8 +138,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       set({ messages: [...newMessages, assistantMessage] });
 
-      // Simulate streaming word by word
-      const words = mockResponse.split(" ");
+      // Render response progressively for consistent UX.
+      const words = assistantText.split(" ");
       for (let i = 0; i < words.length; i++) {
         if (controller.signal.aborted) break;
 
@@ -132,7 +149,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           messages: [...state.messages.slice(0, -1), assistantMessage],
         }));
 
-        await sleep(50);
+        await sleep(20);
       }
 
       // Final update
@@ -158,7 +175,56 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
       }
     } catch (error) {
-      set({ isStreaming: false, abortController: null });
+      const mockResponse =
+        mockAssistantResponses[
+          Math.floor(Math.random() * mockAssistantResponses.length)
+        ];
+
+      const fallbackMessage: Message = {
+        id: `msg-${Date.now()}-assistant-fallback`,
+        role: "assistant",
+        content: "",
+        citations: mockCitations.slice(0, 1),
+        uncertainty: "medium",
+        createdAt: new Date().toISOString(),
+      };
+
+      set({ messages: [...newMessages, fallbackMessage] });
+
+      const words = mockResponse.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        if (controller.signal.aborted) break;
+
+        fallbackMessage.content += (i > 0 ? " " : "") + words[i];
+
+        set((state) => ({
+          messages: [...state.messages.slice(0, -1), fallbackMessage],
+        }));
+
+        await sleep(20);
+      }
+
+      const failedMessages = [...newMessages, fallbackMessage];
+
+      set({
+        messages: failedMessages,
+        isStreaming: false,
+        abortController: null,
+      });
+
+      if (currentConversationId) {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === currentConversationId
+              ? {
+                  ...c,
+                  messages: failedMessages,
+                  updatedAt: new Date().toISOString(),
+                }
+              : c
+          ),
+        }));
+      }
     }
   },
 
