@@ -3,6 +3,7 @@ export type Role = "user" | "assistant";
 export interface Citation {
   id: string;
   title: string;
+  url?: string;
   organization?: string;
   year?: number;
   docType?: string;
