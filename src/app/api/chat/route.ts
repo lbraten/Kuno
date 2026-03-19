@@ -47,6 +47,12 @@ function getUncertaintyFromFilters(filters?: ContentFilterResults): Uncertainty 
 const DEFAULT_SYSTEM_PROMPT =
   "Du er Kuno, en hjelpsom assistent for skole- og utdanningssporsmal i Norge. Svar kort, strukturert og pa norsk bokmal.";
 
+type EndpointMode = "openai-resource" | "project";
+
+function detectEndpointMode(endpoint: string): EndpointMode {
+  return endpoint.includes("/api/projects/") ? "project" : "openai-resource";
+}
+
 function getFoundryConfig() {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
@@ -55,9 +61,14 @@ function getFoundryConfig() {
   const agentId = process.env.AZURE_AI_AGENT_ID;
   const agentApiVersion =
     process.env.AZURE_AI_AGENT_API_VERSION ?? "2024-05-01-preview";
+  const projectAgentApiVersion =
+    process.env.AZURE_AI_PROJECT_API_VERSION ?? "v1";
+  const projectAgentName = process.env.AZURE_AI_PROJECT_AGENT_NAME;
   const requireGroundedOnly =
     (process.env.KUNO_REQUIRE_GROUNDED_ONLY ?? "true").toLowerCase() ===
     "true";
+
+  const mode = endpoint ? detectEndpointMode(endpoint) : null;
 
   return {
     endpoint,
@@ -66,8 +77,13 @@ function getFoundryConfig() {
     apiVersion,
     agentId,
     agentApiVersion,
+    projectAgentApiVersion,
+    projectAgentName,
+    mode,
     requireGroundedOnly,
-    configured: Boolean(endpoint && apiKey && (deployment || agentId)),
+    configured: Boolean(
+      endpoint && apiKey && (deployment || agentId || projectAgentName)
+    ),
   };
 }
 
@@ -273,12 +289,17 @@ async function runDeploymentChat(params: {
   apiKey: string;
   deployment: string;
   apiVersion: string;
+  mode: EndpointMode;
   history: Array<{ role: "user" | "assistant"; content: string }>;
   message: string;
 }) {
-  const { endpoint, apiKey, deployment, apiVersion, history, message } = params;
+  const { endpoint, apiKey, deployment, apiVersion, mode, history, message } =
+    params;
   const cleanEndpoint = endpoint.replace(/\/$/, "");
-  const url = `${cleanEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
+  const url =
+    mode === "project"
+      ? `${cleanEndpoint}/openai/v1/chat/completions`
+      : `${cleanEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
 
   const messages = [
     { role: "system", content: DEFAULT_SYSTEM_PROMPT },
@@ -293,6 +314,7 @@ async function runDeploymentChat(params: {
       "api-key": apiKey,
     },
     body: JSON.stringify({
+      ...(mode === "project" ? { model: deployment } : {}),
       messages,
       temperature: 0.3,
     }),
@@ -322,9 +344,205 @@ async function runDeploymentChat(params: {
   };
 }
 
+function buildProjectInput(
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+  message: string
+) {
+  const turns = [...history, { role: "user" as const, content: message }];
+
+  return turns
+    .map((turn) => `${turn.role === "assistant" ? "Assistent" : "Bruker"}: ${turn.content}`)
+    .join("\n\n");
+}
+
+function extractUrlCitationsFromText(text: string): Citation[] {
+  const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/gi;
+  const rawUrlRegex = /https?:\/\/[^\s)\]]+/gi;
+
+  const seen = new Set<string>();
+  const citations: Citation[] = [];
+
+  let markdownMatch: RegExpExecArray | null;
+  while ((markdownMatch = markdownLinkRegex.exec(text)) !== null) {
+    const title = markdownMatch[1]?.trim();
+    const url = markdownMatch[2]?.trim();
+    if (!url || seen.has(url)) continue;
+
+    seen.add(url);
+    citations.push({
+      id: `src-${citations.length + 1}`,
+      title: title || url,
+      docType: "URL",
+      chunkId: url,
+    });
+  }
+
+  let rawMatch: RegExpExecArray | null;
+  while ((rawMatch = rawUrlRegex.exec(text)) !== null) {
+    const url = rawMatch[0]?.trim();
+    if (!url || seen.has(url)) continue;
+
+    seen.add(url);
+    citations.push({
+      id: `src-${citations.length + 1}`,
+      title: url,
+      docType: "URL",
+      chunkId: url,
+    });
+  }
+
+  return citations;
+}
+
+async function runProjectAgentConversation(params: {
+  endpoint: string;
+  apiKey: string;
+  agentName: string;
+  history: Array<{ role: "user" | "assistant"; content: string }>;
+  message: string;
+}) {
+  const { endpoint, apiKey, agentName, history, message } = params;
+  const cleanEndpoint = endpoint.replace(/\/$/, "");
+
+  const response = await fetch(`${cleanEndpoint}/openai/v1/responses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": apiKey,
+    },
+    body: JSON.stringify({
+      input: buildProjectInput(history, message),
+      agent_reference: {
+        type: "agent_reference",
+        name: agentName,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `HTTP ${response.status}`);
+  }
+
+  const payload = (await response.json()) as {
+    output?: Array<{
+      type?: string;
+      content?: Array<{
+        type?: string;
+        text?: string;
+        annotations?: Array<{
+          type?: string;
+          file_id?: string;
+          title?: string;
+          url?: string;
+        }>;
+      }>;
+    }>;
+  };
+
+  const outputTexts = (payload.output ?? [])
+    .flatMap((item) => item.content ?? [])
+    .filter((item) => item.type === "output_text")
+    .map((item) => item.text?.trim() ?? "")
+    .filter(Boolean);
+
+  const annotations = (payload.output ?? [])
+    .flatMap((item) => item.content ?? [])
+    .flatMap((item) => item.annotations ?? [])
+    .filter(Boolean);
+
+  const citations = annotations.map((annotation, index) => ({
+    id: `src-${index + 1}`,
+    title: annotation.title ?? annotation.url ?? annotation.file_id ?? `Kilde ${index + 1}`,
+    docType: annotation.type ?? "Agent reference",
+    chunkId: annotation.file_id,
+  }));
+
+  const contentText =
+    outputTexts.join("\n\n") ||
+    "Jeg fikk ikke et gyldig svar fra prosjektagenten.";
+
+  const citationsWithFallback =
+    citations.length > 0 ? citations : extractUrlCitationsFromText(contentText);
+
+  return {
+    content: contentText,
+    uncertainty: "low" as const,
+    citations: citationsWithFallback,
+    answerBasis: (citationsWithFallback.length > 0
+      ? "grounded"
+      : "general") as AnswerBasis,
+  };
+}
+
+async function listProjectAgents(params: {
+  endpoint: string;
+  apiKey: string;
+  projectAgentApiVersion: string;
+}) {
+  const { endpoint, apiKey, projectAgentApiVersion } = params;
+  const cleanEndpoint = endpoint.replace(/\/$/, "");
+
+  const payload = await fetchJson<{
+    data?: Array<{ id?: string; name?: string }>;
+  }>(`${cleanEndpoint}/agents?api-version=${projectAgentApiVersion}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": apiKey,
+    },
+  });
+
+  return (payload.data ?? []).map((agent) => ({
+    id: agent.id ?? "",
+    name: agent.name ?? agent.id ?? "",
+  }));
+}
+
 export async function GET() {
-  const { configured } = getFoundryConfig();
-  return NextResponse.json({ foundryConfigured: configured });
+  const {
+    configured,
+    endpoint,
+    apiKey,
+    mode,
+    projectAgentApiVersion,
+    projectAgentName,
+  } = getFoundryConfig();
+
+  if (!configured || !endpoint || !apiKey) {
+    return NextResponse.json({ foundryConfigured: false });
+  }
+
+  if (mode !== "project") {
+    return NextResponse.json({
+      foundryConfigured: true,
+      mode,
+      projectAgents: [],
+      projectAgentName,
+    });
+  }
+
+  try {
+    const projectAgents = await listProjectAgents({
+      endpoint,
+      apiKey,
+      projectAgentApiVersion,
+    });
+
+    return NextResponse.json({
+      foundryConfigured: true,
+      mode,
+      projectAgents,
+      projectAgentName,
+    });
+  } catch {
+    return NextResponse.json({
+      foundryConfigured: true,
+      mode,
+      projectAgents: [],
+      projectAgentName,
+    });
+  }
 }
 
 export async function POST(request: Request) {
@@ -346,6 +564,9 @@ export async function POST(request: Request) {
       apiVersion,
       agentId,
       agentApiVersion,
+      projectAgentApiVersion,
+      projectAgentName,
+      mode,
       requireGroundedOnly,
       configured,
     } =
@@ -355,7 +576,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Manglende Foundry-konfigurasjon. Sett AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY og minst en av AZURE_OPENAI_DEPLOYMENT eller AZURE_AI_AGENT_ID i .env.local",
+            "Manglende Foundry-konfigurasjon. Sett AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY og minst en av AZURE_OPENAI_DEPLOYMENT, AZURE_AI_AGENT_ID eller AZURE_AI_PROJECT_AGENT_NAME i .env.local",
         },
         { status: 500 }
       );
@@ -370,7 +591,52 @@ export async function POST(request: Request) {
 
     let agentError: string | null = null;
 
-    if (agentId) {
+    if (mode === "project" && projectAgentName) {
+      try {
+        const projectAgentResult = await runProjectAgentConversation({
+          endpoint,
+          apiKey,
+          agentName: projectAgentName,
+          history,
+          message: userMessage,
+        });
+
+        if (requireGroundedOnly && projectAgentResult.citations.length === 0) {
+          return NextResponse.json(createBlockedResponse());
+        }
+
+        return NextResponse.json(projectAgentResult);
+      } catch (error) {
+        agentError =
+          error instanceof Error
+            ? error.message
+            : "Ukjent feil ved Project Agent-kall";
+      }
+
+      if (requireGroundedOnly && agentError) {
+        let hints: Array<{ id: string; name: string }> = [];
+
+        try {
+          hints = await listProjectAgents({
+            endpoint,
+            apiKey,
+            projectAgentApiVersion,
+          });
+        } catch {
+          // Keep fallback error response if lookup fails.
+        }
+
+        return NextResponse.json(
+          {
+            error:
+              "Project Agent-kall feilet, og grounded-only modus tillater ikke fallback uten kilder.",
+            details: agentError,
+            availableProjectAgents: hints,
+          },
+          { status: 502 }
+        );
+      }
+    } else if (agentId) {
       try {
         const agentResult = await runAgentConversation({
           endpoint,
@@ -394,6 +660,19 @@ export async function POST(request: Request) {
 
         // Fallback to deployment chat if Agent API is unavailable or misconfigured.
       }
+
+      // In grounded-only mode, failing Agent calls should be explicit.
+      // Silent fallback to deployment will always look ungrounded in this app.
+      if (requireGroundedOnly && agentError) {
+        return NextResponse.json(
+          {
+            error:
+              "Agent-kall feilet, og grounded-only modus tillater ikke fallback uten kilder.",
+            details: agentError,
+          },
+          { status: 502 }
+        );
+      }
     }
 
     if (!deployment) {
@@ -412,6 +691,7 @@ export async function POST(request: Request) {
       apiKey,
       deployment,
       apiVersion,
+      mode: mode ?? "openai-resource",
       history,
       message: userMessage,
     });
