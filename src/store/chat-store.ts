@@ -173,6 +173,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const payload = (await response.json()) as {
         content?: string;
         uncertainty?: Uncertainty;
+        citations?: Citation[];
+        answerBasis?: "grounded" | "general" | "blocked";
       };
       const assistantText =
         payload.content?.trim() || "Jeg fikk ikke noe svar fra modellen.";
@@ -182,8 +184,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         role: "assistant",
         content: "",
         source: "foundry",
-        citations: [],
+        citations: payload.citations ?? [],
         uncertainty: payload.uncertainty ?? "low",
+        answerBasis: payload.answerBasis,
         createdAt: new Date().toISOString(),
       };
 
@@ -237,6 +240,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         source: "mock",
         citations: mockCitationsForTopic,
         uncertainty: topicConfig.uncertainty,
+        answerBasis: "grounded",
         createdAt: new Date().toISOString(),
       };
 

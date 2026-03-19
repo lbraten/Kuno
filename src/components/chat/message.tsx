@@ -21,6 +21,7 @@ interface MessageProps {
 export function Message({ message }: MessageProps) {
   const isUser = message.role === "user";
   const assistantSource = !isUser ? message.source ?? "mock" : null;
+  const answerBasis = !isUser ? message.answerBasis : undefined;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(message.content);
@@ -89,6 +90,23 @@ export function Message({ message }: MessageProps) {
               )}
             >
               {assistantSource === "foundry" ? "AI Foundry" : "Mock data"}
+            </span>
+          )}
+          {answerBasis && (
+            <span
+              className={cn(
+                "text-xs px-2 py-0.5 rounded-full",
+                answerBasis === "grounded" &&
+                  "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                answerBasis === "general" &&
+                  "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                answerBasis === "blocked" &&
+                  "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200"
+              )}
+            >
+              {answerBasis === "grounded" && "Datagrunnlag"}
+              {answerBasis === "general" && "Allmennkunnskap"}
+              {answerBasis === "blocked" && "Ikke i datagrunnlag"}
             </span>
           )}
         </div>

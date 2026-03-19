@@ -13,6 +13,7 @@ export function SourceList() {
     .find((m) => m.role === "assistant");
   const isFoundryWithoutSources =
     latestAssistantMessage?.source === "foundry";
+  const latestAnswerBasis = latestAssistantMessage?.answerBasis;
 
   // Get all unique citations from messages
   const citations = messages
@@ -26,8 +27,12 @@ export function SourceList() {
   if (citations.length === 0) {
     return (
       <div className="text-sm text-muted-foreground text-center py-8">
-        {isFoundryWithoutSources
-          ? "Ingen kilder fra modellen i denne modusen. Foundry-chat henter ikke automatisk fra nett eller kunnskapsbase uten eget oppsett."
+        {latestAnswerBasis === "blocked"
+          ? "Svar ble blokkert fordi ingen kilder ble funnet i datagrunnlaget."
+          : latestAnswerBasis === "general"
+          ? "Dette svaret er merket som allmennkunnskap og har ingen datakilder."
+          : isFoundryWithoutSources
+          ? "Ingen kilder ble mottatt for dette svaret. Sjekk Agent-oppsett og grounding i Foundry."
           : "Ingen kilder ennå. Start en samtale for å se kilder."}
       </div>
     );
