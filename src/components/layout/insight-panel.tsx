@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
-import { X, ChevronLeft } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface InsightPanelProps {
@@ -11,7 +11,7 @@ interface InsightPanelProps {
 }
 
 export function InsightPanel({ children }: InsightPanelProps) {
-  const { insightPanelOpen, setInsightPanelOpen } = useUIStore();
+  const { insightPanelOpen, setInsightPanelOpen, toggleInsightPanel } = useUIStore();
 
   return (
     <>
@@ -46,11 +46,15 @@ export function InsightPanel({ children }: InsightPanelProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setInsightPanelOpen(false)}
-              aria-label="Skjul innsiktspanel"
+              onClick={toggleInsightPanel}
+              aria-label={insightPanelOpen ? "Skjul innsiktspanel" : "Vis innsiktspanel"}
               className="hidden lg:flex"
             >
-              <ChevronLeft className="h-5 w-5" />
+              {insightPanelOpen ? (
+                <ChevronLeft className="h-5 w-5" />
+              ) : (
+                <ChevronRight className="h-5 w-5" />
+              )}
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
@@ -58,6 +62,20 @@ export function InsightPanel({ children }: InsightPanelProps) {
           </div>
         </div>
       </aside>
+
+      {!insightPanelOpen && (
+        <div className="hidden lg:block fixed right-4 top-24 z-40">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleInsightPanel}
+            aria-label="Vis innsiktspanel"
+            className="hidden lg:flex"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
     </>
   );
 }

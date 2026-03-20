@@ -18,13 +18,21 @@ import { QualityNote } from "@/components/insight/quality-note";
 import { CommandPalette } from "@/components/command-palette";
 import { useChatStore } from "@/store/chat-store";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, PanelRightOpen } from "lucide-react";
+import { PanelRightOpen } from "lucide-react";
 import { useUIStore } from "@/store/ui-store";
 import { SettingsDialog } from "@/components/layout/settings-dialog";
 
+const EXAMPLE_PROMPTS = [
+  "Hva er skolens plikter ved mobbing?",
+  "Hvordan beregnes fravær i videregaende?",
+  "Hva er klagefristen etter eksamen?",
+  "Hvilke funn viser evalueringen av fagfornyelsen om implementering i skolen?",
+  "Hvordan kan kjerneelementer brukes mer systematisk i lokal planlegging?",
+  "Hva sier rapportene om vurderingspraksis og dybdelæring i LK20?",
+];
+
 export default function Home() {
-  const { messages, isStreaming, createConversation, currentConversationId } =
-    useChatStore();
+  const { messages, isStreaming, sendMessage } = useChatStore();
   const { setInsightPanelOpen, setSidebarOpen } = useUIStore();
   const { accessibility } = useUIStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -87,23 +95,24 @@ export default function Home() {
                 <div className="max-w-2xl text-center space-y-6">
                   <h2 className="text-3xl font-bold">Velkommen til Kuno</h2>
                   <p className="text-muted-foreground text-lg">
-                    Frontend-demo av Kuno med UI og interaksjoner. Kan kjores med mock-data eller kobles til Azure AI Foundry.
+                    Frontend-demo av Kuno med UI og interaksjoner. Kan kjøres med mock-data eller kobles til Azure AI Foundry.
                   </p>
-                  <Button
-                    size="lg"
-                    onClick={createConversation}
-                    className="gap-2"
-                  >
-                    <PlusCircle className="h-5 w-5" />
-                    Start ny samtale
-                  </Button>
                   <div className="pt-8 text-sm text-muted-foreground">
                     <p className="mb-2">Eksempler du kan prøve:</p>
-                    <ul className="space-y-1">
-                      <li>• Hva er skolens plikter ved mobbing?</li>
-                      <li>• Hvordan beregnes fravær i videregående?</li>
-                      <li>• Hva er klagefristen etter eksamen?</li>
-                    </ul>
+                    <div className="grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
+                      {EXAMPLE_PROMPTS.map((prompt) => (
+                        <Button
+                          key={prompt}
+                          type="button"
+                          variant="outline"
+                          disabled={isStreaming}
+                          onClick={() => void sendMessage(prompt)}
+                          className="min-h-24 w-full justify-center rounded-xl border-border bg-card px-4 py-3 whitespace-normal text-center text-foreground shadow-sm hover:bg-muted"
+                        >
+                          {prompt}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
