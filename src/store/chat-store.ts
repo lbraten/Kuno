@@ -80,6 +80,64 @@ interface ChatState {
 }
 
 const CHAT_CACHE_KEY = "kuno-chat-cache-v1";
+const CHAT_CACHE_VERSION = 2;
+
+type PersistedChatState = {
+  conversations?: Conversation[];
+  currentConversationId?: string | null;
+  messages?: Message[];
+  filter?: Filter;
+  mode?: Mode;
+  retrieveConfig?: RetrieveConfig;
+};
+
+function isConversation(value: unknown): value is Conversation {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<Conversation>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.title === "string" &&
+    typeof candidate.createdAt === "string" &&
+    typeof candidate.updatedAt === "string" &&
+    Array.isArray(candidate.messages)
+  );
+}
+
+function migrateChatCacheState(
+  persistedState: unknown,
+  version: number
+): PersistedChatState {
+  const base = (persistedState ?? {}) as PersistedChatState;
+
+  // v1 -> v2: normalize malformed cache entries and re-derive selected messages.
+  if (version < 2) {
+    const conversations = Array.isArray(base.conversations)
+      ? base.conversations.filter(isConversation)
+      : [];
+    const sortedConversations = sortConversationsByUpdatedAt(conversations);
+    const hasCurrentConversation = sortedConversations.some(
+      (conversation) => conversation.id === base.currentConversationId
+    );
+    const currentConversationId = hasCurrentConversation
+      ? (base.currentConversationId ?? null)
+      : (sortedConversations[0]?.id ?? null);
+    const selectedConversation = sortedConversations.find(
+      (conversation) => conversation.id === currentConversationId
+    );
+
+    return {
+      ...base,
+      conversations: sortedConversations,
+      currentConversationId,
+      messages: selectedConversation?.messages ?? [],
+      filter: base.filter ?? { organizations: [], years: [], docTypes: [] },
+      mode: base.mode ?? "chat",
+      retrieveConfig: base.retrieveConfig ?? { topK: 5, minScore: 0.7 },
+    };
+  }
+
+  return base;
+}
 
 function sortConversationsByUpdatedAt(conversations: Conversation[]): Conversation[] {
   return [...conversations].sort(
@@ -97,6 +155,10 @@ function withConversationUpdated(
   );
 
   return sortConversationsByUpdatedAt(next);
+}
+
+function isEmptyDraftConversation(conversation: Conversation): boolean {
+  return conversation.title === "Ny samtale" && conversation.messages.length === 0;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -128,7 +190,14 @@ export const useChatStore = create<ChatState>()(
           messages: [],
         };
         set((state) => ({
-          conversations: sortConversationsByUpdatedAt([newConv, ...state.conversations]),
+          conversations: sortConversationsByUpdatedAt([
+            newConv,
+            ...state.conversations.filter((conversation) =>
+              conversation.id === state.currentConversationId
+                ? !isEmptyDraftConversation(conversation)
+                : true
+            ),
+          ]),
           currentConversationId: newConv.id,
           messages: [],
         }));
@@ -365,7 +434,9 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: CHAT_CACHE_KEY,
+      version: CHAT_CACHE_VERSION,
       storage: createJSONStorage(() => localStorage),
+      migrate: migrateChatCacheState,
       partialize: (state) => ({
         conversations: state.conversations,
         currentConversationId: state.currentConversationId,
@@ -380,16 +451,9 @@ export const useChatStore = create<ChatState>()(
         state.abortController = null;
         state.isStreaming = false;
 
-        if (!state.currentConversationId) {
-          state.messages = [];
-          return;
-        }
-
-        const selectedConversation = state.conversations.find(
-          (conversation) => conversation.id === state.currentConversationId
-        );
-
-        state.messages = selectedConversation?.messages ?? [];
+        // Always open on a fresh chat view after page refresh.
+        state.currentConversationId = null;
+        state.messages = [];
       },
     }
   )

@@ -88,3 +88,64 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Accessibility toggles */
+body.a11y-text-large {
+  font-size: 112.5%;
+}
+
+body.a11y-text-xlarge {
+  font-size: 125%;
+}
+
+body.a11y-high-contrast {
+  --foreground: 0 0% 7%;
+  --background: 0 0% 100%;
+  --muted-foreground: 0 0% 18%;
+  --border: 0 0% 45%;
+  --ring: 149.6 45% 35%;
+}
+
+body.dark.a11y-high-contrast,
+html.dark body.a11y-high-contrast {
+  --foreground: 0 0% 100%;
+  --background: 220 10% 8%;
+  --muted-foreground: 0 0% 85%;
+  --border: 0 0% 55%;
+}
+
+body.a11y-reduced-motion *,
+body.a11y-reduced-motion *::before,
+body.a11y-reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+body.a11y-dyslexic-font {
+  font-family: var(--font-atkinson-hyperlegible), "Segoe UI", Tahoma, Geneva,
+    Verdana, sans-serif;
+}
+
+body.a11y-roboto-font {
+  font-family: var(--font-roboto), "Segoe UI", Tahoma, Geneva, Verdana,
+    sans-serif;
+}
+
+body.a11y-dyslexic-font strong,
+body.a11y-dyslexic-font b,
+body.a11y-dyslexic-font .font-semibold,
+body.a11y-dyslexic-font .font-bold,
+body.a11y-dyslexic-font .font-extrabold {
+  font-weight: 700;
+}
+
+body.a11y-extra-line-spacing {
+  line-height: 1.65;
+}
+
+body.a11y-strong-focus :is(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 2px;
+}

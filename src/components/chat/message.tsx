@@ -13,6 +13,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useUIStore } from "@/store/ui-store";
+import { getCitationSelectionKey } from "@/lib/citation-utils";
 
 interface MessageProps {
   message: MessageType;
@@ -22,6 +24,9 @@ export function Message({ message }: MessageProps) {
   const isUser = message.role === "user";
   const assistantSource = !isUser ? message.source ?? "mock" : null;
   const answerBasis = !isUser ? message.answerBasis : undefined;
+  const { setSelectedCitationKey, setInsightPanelOpen, accessibility } =
+    useUIStore();
+  const markdownMode = accessibility.markdownMode;
 
   const copyToClipboard = async () => {
     if (
@@ -83,7 +88,7 @@ export function Message({ message }: MessageProps) {
           <span className="text-xs text-muted-foreground">
             {formatDate(message.createdAt)}
           </span>
-          {message.uncertainty && !isUser && (
+          {message.uncertainty && !isUser && !markdownMode && (
             <span
               className={cn(
                 "text-xs px-2 py-0.5 rounded-full",
@@ -100,7 +105,7 @@ export function Message({ message }: MessageProps) {
               {message.uncertainty === "high" && "Lav sikkerhet"}
             </span>
           )}
-          {assistantSource && (
+          {assistantSource && !markdownMode && (
             <span
               className={cn(
                 "text-xs px-2 py-0.5 rounded-full",
@@ -112,7 +117,7 @@ export function Message({ message }: MessageProps) {
               {assistantSource === "foundry" ? "AI Foundry" : "Mock data"}
             </span>
           )}
-          {answerBasis && (
+          {answerBasis && !markdownMode && (
             <span
               className={cn(
                 "text-xs px-2 py-0.5 rounded-full",
@@ -131,22 +136,29 @@ export function Message({ message }: MessageProps) {
           )}
         </div>
 
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          {isUser ? (
-            <p className="whitespace-pre-wrap">{message.content}</p>
-          ) : (
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          )}
-        </div>
+        {markdownMode && !isUser ? (
+          <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm leading-relaxed overflow-x-auto">
+            {message.content}
+          </pre>
+        ) : (
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            {isUser ? (
+              <p className="whitespace-pre-wrap">{message.content}</p>
+            ) : (
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            )}
+          </div>
+        )}
 
-        {!isUser && message.citations && message.citations.length > 0 && (
+        {!isUser && !markdownMode && message.citations && message.citations.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {message.citations.map((citation) => (
               <button
                 key={citation.id}
                 className="text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-secondary/60 px-2 py-1 rounded transition-colors"
                 onClick={() => {
-                  // In a real app, this would scroll to the source
+                  setSelectedCitationKey(getCitationSelectionKey(citation));
+                  setInsightPanelOpen(true);
                 }}
               >
                 [{citation.id}] {citation.title}
@@ -155,7 +167,7 @@ export function Message({ message }: MessageProps) {
           </div>
         )}
 
-        {!isUser && (
+        {!isUser && !markdownMode && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <TooltipProvider>
               <Tooltip>

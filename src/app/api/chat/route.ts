@@ -69,6 +69,14 @@ function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Ukjent feil";
 }
 
+function isOboAuthMismatchError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("obo auth") &&
+    normalized.includes("api key authentication")
+  );
+}
+
 function logChatEvent(
   level: "info" | "warn" | "error",
   event: string,
@@ -105,11 +113,15 @@ function getFoundryConfig() {
   const projectAgentApiVersion =
     process.env.AZURE_AI_PROJECT_API_VERSION ?? "v1";
   const projectAgentName = process.env.AZURE_AI_PROJECT_AGENT_NAME;
+  const projectAgentVersion = process.env.AZURE_AI_PROJECT_AGENT_VERSION;
   const allowTextUrlCitationFallback =
     (process.env.KUNO_ALLOW_TEXT_URL_CITATION_FALLBACK ?? "false").toLowerCase() ===
     "true";
   const includeDebugDetails =
     (process.env.KUNO_INCLUDE_DEBUG_DETAILS ?? "true").toLowerCase() ===
+    "true";
+  const strictProjectToolAuth =
+    (process.env.KUNO_STRICT_PROJECT_TOOL_AUTH ?? "false").toLowerCase() ===
     "true";
   const searchMetadataEndpoint = process.env.AZURE_AI_SEARCH_ENDPOINT;
   const searchMetadataApiKey = process.env.AZURE_AI_SEARCH_API_KEY;
@@ -137,6 +149,7 @@ function getFoundryConfig() {
     agentApiVersion,
     projectAgentApiVersion,
     projectAgentName,
+    projectAgentVersion,
     allowTextUrlCitationFallback,
     includeDebugDetails,
     searchMetadataEndpoint,
@@ -148,6 +161,7 @@ function getFoundryConfig() {
     searchMetadataUrlField,
     mode,
     requireGroundedOnly,
+    strictProjectToolAuth,
     configured: Boolean(
       endpoint && apiKey && (deployment || agentId || projectAgentName)
     ),
@@ -775,6 +789,7 @@ async function runProjectAgentConversation(params: {
   endpoint: string;
   apiKey: string;
   agentName: string;
+  agentVersion?: string;
   allowTextUrlCitationFallback: boolean;
   searchMetadataConfig: SearchMetadataConfig | null;
   history: Array<{ role: "user" | "assistant"; content: string }>;
@@ -784,6 +799,7 @@ async function runProjectAgentConversation(params: {
     endpoint,
     apiKey,
     agentName,
+    agentVersion,
     allowTextUrlCitationFallback,
     searchMetadataConfig,
     history,
@@ -802,6 +818,7 @@ async function runProjectAgentConversation(params: {
       agent_reference: {
         type: "agent_reference",
         name: agentName,
+        ...(agentVersion ? { version: agentVersion } : {}),
       },
     }),
   });
@@ -902,6 +919,7 @@ async function runProjectAgentConversation(params: {
     diagnostics: {
       mode: "project",
       agentName,
+      agentVersion: agentVersion ?? null,
       annotations: annotations.length,
       annotationCitations: annotationCitations.length,
       usableAnnotationCitations: usableAnnotationCitations.length,
@@ -1007,10 +1025,12 @@ export async function POST(request: Request) {
       agentApiVersion,
       projectAgentApiVersion,
       projectAgentName,
+      projectAgentVersion,
       allowTextUrlCitationFallback,
       includeDebugDetails,
       mode,
       requireGroundedOnly,
+      strictProjectToolAuth,
       configured,
     } = foundryConfig;
 
@@ -1037,7 +1057,9 @@ export async function POST(request: Request) {
       mode,
       deployment,
       projectAgentName,
+      projectAgentVersion,
       requireGroundedOnly,
+      strictProjectToolAuth,
       allowTextUrlCitationFallback,
       historyCount: history.length,
       messageLength: userMessage.length,
@@ -1051,6 +1073,7 @@ export async function POST(request: Request) {
           endpoint,
           apiKey,
           agentName: projectAgentName,
+          agentVersion: projectAgentVersion,
           allowTextUrlCitationFallback,
           searchMetadataConfig,
           history,
@@ -1087,6 +1110,35 @@ export async function POST(request: Request) {
           projectAgentName,
           error: agentError,
         });
+
+        if (isOboAuthMismatchError(agentError) && strictProjectToolAuth) {
+          return NextResponse.json(
+            {
+              error:
+                "Project Agent-feil: verktøyet bruker OBO-auth, men appen kaller med API-key. Bytt verktoy/auth i Foundry-agenten eller bruk Entra/OBO i appen.",
+              details: agentError,
+              ...(includeDebugDetails
+                ? {
+                    debug: {
+                      reason: "project_call_failed_obo_auth_mismatch",
+                      mode,
+                      projectAgentName,
+                    },
+                  }
+                : {}),
+            },
+            { status: 502 }
+          );
+        }
+
+        if (isOboAuthMismatchError(agentError) && !strictProjectToolAuth) {
+          logChatEvent("warn", "project.call_failed_obo_auth_mismatch", {
+            mode,
+            projectAgentName,
+            strictProjectToolAuth,
+            fallback: "deployment",
+          });
+        }
       }
 
       if (requireGroundedOnly && agentError) {

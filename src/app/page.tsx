@@ -20,11 +20,13 @@ import { useChatStore } from "@/store/chat-store";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, PanelRightOpen } from "lucide-react";
 import { useUIStore } from "@/store/ui-store";
+import { SettingsDialog } from "@/components/layout/settings-dialog";
 
 export default function Home() {
   const { messages, isStreaming, createConversation, currentConversationId } =
     useChatStore();
   const { setInsightPanelOpen, setSidebarOpen } = useUIStore();
+  const { accessibility } = useUIStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,6 +40,20 @@ export default function Home() {
     setInsightPanelOpen(isLgUp);
   }, [setInsightPanelOpen, setSidebarOpen]);
 
+  useEffect(() => {
+    const body = document.body;
+
+    body.classList.toggle("a11y-text-large", accessibility.textScale === "large");
+    body.classList.toggle("a11y-text-xlarge", accessibility.textScale === "xlarge");
+    body.classList.toggle("a11y-markdown-mode", accessibility.markdownMode);
+    body.classList.toggle("a11y-high-contrast", accessibility.highContrast);
+    body.classList.toggle("a11y-reduced-motion", accessibility.reducedMotion);
+    body.classList.toggle("a11y-dyslexic-font", accessibility.dyslexicFont);
+    body.classList.toggle("a11y-roboto-font", accessibility.robotoFont);
+    body.classList.toggle("a11y-extra-line-spacing", accessibility.extraLineSpacing);
+    body.classList.toggle("a11y-strong-focus", accessibility.strongFocus);
+  }, [accessibility]);
+
   const hasMessages = messages.length > 0;
 
   return (
@@ -45,14 +61,17 @@ export default function Home() {
       <DemoBanner />
       <TopBar />
       <CommandPalette />
+      <SettingsDialog />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
         <SidePanel>
           <div className="space-y-6">
-            <HistoryList />
-            <div className="border-t pt-6">
+            <div>
               <ModeToggle />
+            </div>
+            <div className="border-t pt-6">
+              <HistoryList />
             </div>
             <div className="border-t pt-6">
               <Filters />

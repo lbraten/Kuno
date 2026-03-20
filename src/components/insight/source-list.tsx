@@ -1,9 +1,14 @@
 "use client";
 
+import { useEffect } from "react";
+import { useState } from "react";
 import { useChatStore } from "@/store/chat-store";
+import { useUIStore } from "@/store/ui-store";
 import { Card } from "@/components/ui/card";
 import { FileText, Building, Calendar, FileType } from "lucide-react";
 import { Citation } from "@/types";
+import { cn } from "@/lib/utils";
+import { getCitationSelectionKey } from "@/lib/citation-utils";
 
 const INTERNAL_URL_HOST_PATTERNS = [
   ".search.windows.net",
@@ -49,6 +54,7 @@ function getCitationUrl(citation: Citation): string | null {
 
 export function SourceList() {
   const { messages } = useChatStore();
+  const { selectedCitationKey } = useUIStore();
 
   const latestAssistantMessage = [...messages]
     .reverse()
@@ -65,6 +71,18 @@ export function SourceList() {
       (citation, index, self) =>
         index === self.findIndex((c) => c.id === citation.id)
     );
+
+  useEffect(() => {
+    if (!selectedCitationKey) return;
+
+    const selectedElement = document.querySelector(
+      `[data-citation-key="${CSS.escape(selectedCitationKey)}"]`
+    );
+
+    if (selectedElement instanceof HTMLElement) {
+      selectedElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [selectedCitationKey]);
 
   if (citations.length === 0) {
     return (
@@ -84,21 +102,40 @@ export function SourceList() {
     <div className="space-y-3">
       <h3 className="font-semibold text-sm">Kilder ({citations.length})</h3>
       {citations.map((citation) => (
-        <SourceCard key={citation.id} citation={citation} />
+        <SourceCard
+          key={citation.id}
+          citation={citation}
+          highlighted={getCitationSelectionKey(citation) === selectedCitationKey}
+        />
       ))}
     </div>
   );
 }
 
-function SourceCard({ citation }: { citation: Citation }) {
+function SourceCard({
+  citation,
+  highlighted,
+}: {
+  citation: Citation;
+  highlighted: boolean;
+}) {
+  const [showChunkLink, setShowChunkLink] = useState(false);
   const citationUrl = getCitationUrl(citation);
   const downloadUrl =
     citationUrl && citationUrl.startsWith("/api/source-file")
       ? `${citationUrl}&mode=download`
       : citationUrl;
+  const citationKey = getCitationSelectionKey(citation);
 
   return (
-    <Card className="p-3 hover:shadow-md transition-shadow">
+    <Card
+      data-citation-key={citationKey}
+      className={cn(
+        "p-3 hover:shadow-md transition-all duration-200",
+        highlighted &&
+          "ring-2 ring-primary/70 bg-primary/5 border-primary/40 shadow-md"
+      )}
+    >
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-2">
           <h4 className="font-medium text-sm leading-tight flex-1">
@@ -132,7 +169,22 @@ function SourceCard({ citation }: { citation: Citation }) {
           )}
         </div>
 
-        {citation.chunkId && <div className="text-xs text-primary">Chunk: {citation.chunkId}</div>}
+        {citation.chunkId && (
+          <div className="space-y-1">
+            <button
+              type="button"
+              className="text-xs text-primary underline underline-offset-2"
+              onClick={() => setShowChunkLink((prev) => !prev)}
+            >
+              {showChunkLink ? "Skjul chunk-lenke" : "Vis chunk-lenke"}
+            </button>
+            {showChunkLink && (
+              <div className="text-xs text-primary break-all">
+                Chunk: {citation.chunkId}
+              </div>
+            )}
+          </div>
+        )}
 
         {citationUrl && (
           <div className="flex items-center gap-3 text-xs">

@@ -13,7 +13,13 @@ import {
 import { useEffect, useState } from "react";
 
 export function TopBar() {
-  const { theme, setTheme, toggleSidebar, setCommandPaletteOpen } =
+  const {
+    theme,
+    setTheme,
+    toggleSidebar,
+    setCommandPaletteOpen,
+    setSettingsOpen,
+  } =
     useUIStore();
   const [mounted, setMounted] = useState(false);
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
@@ -127,7 +133,12 @@ export function TopBar() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Innstillinger">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Innstillinger"
+                onClick={() => setSettingsOpen(true)}
+              >
                 <Settings className="h-5 w-5" />
               </Button>
             </TooltipTrigger>
