@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { PanelRightOpen } from "lucide-react";
 import { useUIStore } from "@/store/ui-store";
 import { SettingsDialog } from "@/components/layout/settings-dialog";
+import Image from "next/image";
 
 const EXAMPLE_PROMPTS = [
   "Hva er skolens plikter ved mobbing?",
@@ -92,13 +93,50 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {!hasMessages ? (
               <div className="flex flex-col items-center justify-center h-full px-4">
-                <div className="max-w-2xl text-center space-y-6">
-                  <h2 className="text-3xl font-bold">Velkommen til Kuno</h2>
-                  <p className="text-muted-foreground text-lg">
-                    Frontend-demo av Kuno med UI og interaksjoner. Kan kjøres med mock-data eller kobles til Azure AI Foundry.
-                  </p>
-                  <div className="pt-8 text-sm text-muted-foreground">
-                    <p className="mb-2">Eksempler du kan prøve:</p>
+                <div className="w-full max-w-3xl rounded-2xl border bg-card/70 p-6 shadow-sm backdrop-blur-sm md:p-8">
+                  <div className="mx-auto max-w-2xl text-center space-y-5">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border bg-background shadow-sm">
+                      <Image
+                        src="/branding/Kuno-logo.svg"
+                        alt="Kuno"
+                        width={34}
+                        height={34}
+                        className="h-8 w-8 dark:hidden"
+                      />
+                      <Image
+                        src="/branding/Kuno-logo-white.svg"
+                        alt="Kuno"
+                        width={34}
+                        height={34}
+                        className="hidden h-8 w-8 dark:block"
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <h2 className="text-3xl font-bold tracking-tight">Hei, jeg er Kuno!</h2>
+                      <p className="text-muted-foreground text-lg leading-relaxed">
+                        Jeg hjelper deg med a finne og oppsummere innsikt fra rapporter om skole, læreplan og fagfornyelsen.
+                        Be meg om korte oppsummeringer, sammenligning av funn eller forslag til neste steg.
+                      </p>
+                    </div>
+
+                    <div className="mx-auto grid max-w-xl grid-cols-1 gap-2 text-center text-sm sm:grid-cols-3">
+                      <div className="rounded-lg border border-primary/30 bg-secondary px-3 py-2 text-secondary-foreground">
+                        Oppsummere funn
+                      </div>
+                      <div className="rounded-lg border border-primary/30 bg-secondary px-3 py-2 text-secondary-foreground">
+                        Sammenligne rapporter
+                      </div>
+                      <div className="rounded-lg border border-primary/30 bg-secondary px-3 py-2 text-secondary-foreground">
+                        Foresla oppfølging
+                      </div>
+                    </div>
+
+                    <div className="pt-4 text-sm text-muted-foreground">
+                      <p className="mb-2 font-medium text-foreground">Prøv et spørsmal:</p>
+                      <p className="mb-4">Klikk på et forslag under, eller skriv ditt eget spørsmal nederst.</p>
+                    </div>
+
                     <div className="grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
                       {EXAMPLE_PROMPTS.map((prompt) => (
                         <Button
