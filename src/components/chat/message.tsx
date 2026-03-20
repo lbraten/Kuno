@@ -23,8 +23,28 @@ export function Message({ message }: MessageProps) {
   const assistantSource = !isUser ? message.source ?? "mock" : null;
   const answerBasis = !isUser ? message.answerBasis : undefined;
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(message.content);
+  const copyToClipboard = async () => {
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.clipboard &&
+      typeof navigator.clipboard.writeText === "function"
+    ) {
+      await navigator.clipboard.writeText(message.content);
+      return;
+    }
+
+    // Fallback for environments where Clipboard API is unavailable.
+    if (typeof document !== "undefined") {
+      const textArea = document.createElement("textarea");
+      textArea.value = message.content;
+      textArea.setAttribute("readonly", "");
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+    }
   };
 
   return (
