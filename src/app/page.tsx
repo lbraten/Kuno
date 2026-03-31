@@ -93,7 +93,7 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {!hasMessages ? (
               <div className="flex flex-col items-center justify-center h-full px-4">
-                <div className="w-full max-w-3xl rounded-2xl border bg-card/70 p-6 shadow-sm backdrop-blur-sm md:p-8">
+                <div className="w-full max-w-3xl rounded-2xl border bg-card/70 shadow-sm backdrop-blur-sm md:p-8">
                   <div className="mx-auto max-w-2xl text-center space-y-5">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border bg-background shadow-sm">
                       <Image
@@ -115,7 +115,7 @@ export default function Home() {
                     <div className="space-y-3">
                       <h2 className="text-3xl font-bold tracking-tight">Hei, jeg er Kuno!</h2>
                       <p className="text-muted-foreground text-lg leading-relaxed">
-                        Jeg hjelper deg med a finne og oppsummere innsikt fra rapporter om skole, læreplan og fagfornyelsen.
+                        Jeg hjelper deg med å finne og oppsummere innsikt fra rapporter om skole, læreplan og fagfornyelsen.
                         Be meg om korte oppsummeringer, sammenligning av funn eller forslag til neste steg.
                       </p>
                     </div>
