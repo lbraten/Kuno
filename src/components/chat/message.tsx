@@ -7,6 +7,8 @@ import { User, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import {
   Tooltip,
   TooltipContent,
@@ -141,11 +143,13 @@ export function Message({ message }: MessageProps) {
             {message.content}
           </pre>
         ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none">
+          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-3 prose-headings:mt-6 prose-headings:mb-2">
             {isUser ? (
               <p className="whitespace-pre-wrap">{message.content}</p>
             ) : (
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                {message.content}
+              </ReactMarkdown>
             )}
           </div>
         )}
