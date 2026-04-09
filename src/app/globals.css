@@ -12,39 +12,39 @@
     --popover-foreground: 0 0% 18.8%;
     --primary: 149.6 28.1% 49.6%; /* Udir green 8 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 150 41.7% 90.6%;
-    --secondary-foreground: 150 33.9% 22%;
-    --muted: 0 0% 95.7%;
+    --secondary: 207 57% 90%; /* Udir blue 3 */
+    --secondary-foreground: 209 34% 28%; /* Udir blue 10 */
+    --muted: 0 0% 95.7%; /* Udir sort 2 */
     --muted-foreground: 0 0% 45.9%;
-    --accent: 148 41.7% 85.9%;
-    --accent-foreground: 150 33.9% 22%;
+    --accent: 148 41.7% 85.9%; /* Udir green 3 */
+    --accent-foreground: 149 34% 22%; /* Udir green 9 */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 0 0% 91.8%;
-    --input: 0 0% 91.8%;
+    --border: 0 0% 91.8%; /* Udir sort 3 */
+    --input: 0 0% 87.1%; /* Udir sort 4 */
     --ring: 149.6 28.1% 49.6%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 220 8% 12%;
-    --foreground: 0 0% 95%;
-    --card: 220 7% 16%;
-    --card-foreground: 0 0% 95%;
-    --popover: 220 7% 16%;
-    --popover-foreground: 0 0% 95%;
+    --background: 220 18% 12%; /* Udir blue 12 */
+    --foreground: 0 0% 98.4%;
+    --card: 205 29% 21%; /* Udir blue 11 */
+    --card-foreground: 0 0% 98.4%;
+    --popover: 205 29% 21%;
+    --popover-foreground: 0 0% 98.4%;
     --primary: 149.3 41.2% 62%;
-    --primary-foreground: 220 8% 12%;
-    --secondary: 220 6% 20%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 220 6% 20%;
-    --muted-foreground: 0 0% 72%;
-    --accent: 220 6% 20%;
-    --accent-foreground: 0 0% 95%;
+    --primary-foreground: 220 18% 12%;
+    --secondary: 209 34% 28%; /* Udir blue 10 */
+    --secondary-foreground: 0 0% 98.4%;
+    --muted: 209 34% 28%; /* Udir blue 10 */
+    --muted-foreground: 0 0% 76.9%; /* Udir sort 5 */
+    --accent: 208 20% 52%; /* Udir blue 8 */
+    --accent-foreground: 0 0% 98.4%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 95%;
-    --border: 220 6% 22%;
-    --input: 220 6% 22%;
+    --destructive-foreground: 0 0% 98.4%;
+    --border: 207 22% 42%; /* Udir blue 9 */
+    --input: 208 20% 36%;
     --ring: 149.3 41.2% 62%;
   }
 }

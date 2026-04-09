@@ -111,7 +111,7 @@ export function Filters() {
                       "px-3 py-1 rounded-full text-sm border transition-colors",
                       filter.years.includes(year)
                         ? "bg-primary text-primary-foreground border-primary/70 hover:bg-primary/85"
-                        : "border-input hover:bg-secondary/70 hover:border-primary/30"
+                        : "border-input hover:bg-primary/10 hover:border-primary/40"
                     )}
                   >
                     {year}

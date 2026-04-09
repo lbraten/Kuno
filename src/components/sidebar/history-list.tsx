@@ -108,8 +108,10 @@ export function HistoryList() {
       >
         <div
           className={cn(
-            "group flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent cursor-pointer",
-            currentConversationId === conv.id && "bg-accent"
+            "group flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm transition-colors cursor-pointer",
+            currentConversationId === conv.id
+              ? "bg-primary/10 border-primary/45 hover:bg-primary/15"
+              : "hover:bg-secondary/55"
           )}
           onClick={() => {
             if (conv.id === currentConversationId) return;

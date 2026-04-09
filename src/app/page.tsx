@@ -25,7 +25,7 @@ import Image from "next/image";
 
 const EXAMPLE_PROMPTS = [
   "Hva er skolens plikter ved mobbing?",
-  "Hvordan beregnes fravær i videregaende?",
+  "Hvordan beregnes fravær i videregående?",
   "Hva er klagefristen etter eksamen?",
   "Hvilke funn viser evalueringen av fagfornyelsen om implementering i skolen?",
   "Hvordan kan kjerneelementer brukes mer systematisk i lokal planlegging?",
@@ -121,13 +121,13 @@ export default function Home() {
                     </div>
 
                     <div className="mx-auto grid max-w-xl grid-cols-1 gap-2 text-center text-sm sm:grid-cols-3">
-                      <div className="rounded-lg border border-primary/30 bg-secondary px-3 py-2 text-secondary-foreground">
+                      <div className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary">
                         Oppsummere funn
                       </div>
-                      <div className="rounded-lg border border-primary/30 bg-secondary px-3 py-2 text-secondary-foreground">
+                      <div className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary">
                         Sammenligne rapporter
                       </div>
-                      <div className="rounded-lg border border-primary/30 bg-secondary px-3 py-2 text-secondary-foreground">
+                      <div className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary">
                         Foresla oppfølging
                       </div>
                     </div>

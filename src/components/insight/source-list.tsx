@@ -142,7 +142,7 @@ function SourceCard({
             {citation.title}
           </h4>
           {citation.score && (
-            <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-0.5 rounded-full flex-shrink-0">
+            <span className="text-xs bg-primary/15 text-primary border border-primary/30 px-2 py-0.5 rounded-full flex-shrink-0">
               {(citation.score * 100).toFixed(0)}%
             </span>
           )}

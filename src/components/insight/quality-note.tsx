@@ -21,15 +21,15 @@ export function QualityNote() {
   const explanation = uncertaintyExplanations[uncertainty];
 
   return (
-    <Card className="border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
+    <Card className="border-[#D6B689] bg-[#FBF3E8] dark:border-[#937A57] dark:bg-[#261F14]/55">
       <CardHeader className="p-3 pb-2">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Info className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+        <CardTitle className="text-sm flex items-center gap-2 text-foreground">
+          <Info className="h-4 w-4 text-[#937A57] dark:text-[#D6B689]" />
           Kvalitetsnotat
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        <p className="text-xs text-amber-900 dark:text-amber-200">
+        <p className="text-xs text-foreground/85 dark:text-foreground/90">
           {explanation}
         </p>
       </CardContent>
