@@ -77,10 +77,10 @@ export default function Home() {
         <SidePanel>
           <div className="space-y-6">
             <div>
-              <ModeToggle />
+              <HistoryList />
             </div>
             <div className="border-t pt-6">
-              <HistoryList />
+              <ModeToggle />
             </div>
             <div className="border-t pt-6">
               <Filters />
