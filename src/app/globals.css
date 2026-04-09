@@ -58,6 +58,15 @@
   }
 }
 
+/* Keep dark/light theme switch speed consistent across all UI elements. */
+:root.theme-changing *,
+:root.theme-changing *::before,
+:root.theme-changing *::after {
+  transition-property: color, background-color, border-color, fill, stroke, box-shadow !important;
+  transition-duration: 180ms !important;
+  transition-timing-function: ease !important;
+}
+
 /* Custom scrollbar */
 @layer utilities {
   .scrollbar-thin::-webkit-scrollbar {

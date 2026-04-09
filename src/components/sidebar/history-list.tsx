@@ -249,7 +249,7 @@ export function HistoryList() {
                       : "-translate-y-1 opacity-0"
                   )}
                 >
-                  Vis faerre samtaler
+                  Vis færre samtaler
                 </span>
                 <span
                   className={cn(
