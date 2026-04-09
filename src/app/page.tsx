@@ -67,7 +67,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen">
-      <DemoBanner />
+      {Boolean(accessibility.infoBanner) && <DemoBanner />}
       <TopBar />
       <CommandPalette />
       <SettingsDialog />

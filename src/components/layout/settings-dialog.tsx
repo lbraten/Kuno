@@ -18,7 +18,7 @@ export function SettingsDialog() {
 
   return (
     <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-      <DialogContent>
+      <DialogContent className="w-[68vw] max-w-[980px] h-[70vh] max-h-[70vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Innstillinger</DialogTitle>
           <DialogDescription>
@@ -26,11 +26,27 @@ export function SettingsDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-y-auto pr-1">
           <div className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Visning
             </h3>
+          </div>
+
+          <div className="flex items-start justify-between gap-3 rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Infobanner</p>
+              <p className="text-xs text-muted-foreground">
+                Viser informasjon om demo og tilkoblingsstatus øverst i appen.
+              </p>
+            </div>
+            <Switch
+              checked={Boolean(accessibility.infoBanner)}
+              onCheckedChange={(checked) =>
+                setAccessibility({ infoBanner: checked })
+              }
+              aria-label="Vis infobanner"
+            />
           </div>
 
           <div className="flex items-start justify-between gap-3 rounded-md border p-3">

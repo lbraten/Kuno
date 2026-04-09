@@ -62,8 +62,7 @@ export function DemoBanner() {
             </>
           ) : showMockFallbackActive ? (
             <>
-              <strong>Kuno (demo):</strong> AI Foundry er konfigurert, men mock
-              fallback er aktiv akkurat nå.
+              <strong>Kuno (demo):</strong> AI Foundry er konfigurert men ikke tilkoblet.
             </>
           ) : showFoundryConnected ? (
             <>

@@ -27,8 +27,10 @@ export function InsightPanel({ children }: InsightPanelProps) {
       {/* Insight panel */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 right-0 z-50 w-80 border-l bg-background transition-transform duration-300 ease-in-out lg:translate-x-0",
-          insightPanelOpen ? "translate-x-0" : "translate-x-full"
+          "fixed inset-y-0 right-0 z-50 border-l bg-background overflow-hidden transition-all duration-300 ease-in-out lg:static lg:inset-auto lg:right-auto",
+          insightPanelOpen
+            ? "w-80 translate-x-0"
+            : "w-80 translate-x-full lg:w-0 lg:translate-x-0 lg:border-l-0"
         )}
       >
         <div className="flex h-full flex-col">

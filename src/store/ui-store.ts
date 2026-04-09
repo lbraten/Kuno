@@ -9,6 +9,7 @@ interface UIState {
   settingsOpen: boolean;
   selectedCitationKey: string | null;
   accessibility: {
+    infoBanner: boolean;
     markdownMode: boolean;
     textScale: "normal" | "large" | "xlarge";
     highContrast: boolean;
@@ -40,6 +41,7 @@ export const useUIStore = create<UIState>()(
       settingsOpen: false,
       selectedCitationKey: null,
       accessibility: {
+        infoBanner: false,
         markdownMode: false,
         textScale: "normal",
         highContrast: false,
