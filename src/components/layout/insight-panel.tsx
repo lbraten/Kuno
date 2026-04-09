@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { useUIStore } from "@/store/ui-store";
 import { cn } from "@/lib/utils";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface InsightPanelProps {
@@ -45,19 +45,6 @@ export function InsightPanel({ children }: InsightPanelProps) {
             >
               <X className="h-5 w-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleInsightPanel}
-              aria-label={insightPanelOpen ? "Skjul innsiktspanel" : "Vis innsiktspanel"}
-              className="hidden lg:flex"
-            >
-              {insightPanelOpen ? (
-                <ChevronLeft className="h-5 w-5" />
-              ) : (
-                <ChevronRight className="h-5 w-5" />
-              )}
-            </Button>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
             {children}
@@ -65,19 +52,51 @@ export function InsightPanel({ children }: InsightPanelProps) {
         </div>
       </aside>
 
-      {!insightPanelOpen && (
-        <div className="hidden lg:block fixed right-4 top-24 z-40">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleInsightPanel}
-            aria-label="Vis innsiktspanel"
-            className="hidden lg:flex"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </div>
-      )}
+      <div className="hidden lg:block fixed right-4 top-[66px] z-[60]">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleInsightPanel}
+          aria-label={insightPanelOpen ? "Skjul innsiktspanel" : "Vis innsiktspanel"}
+          className="hidden lg:flex bg-background/95 shadow-sm backdrop-blur [&_svg]:size-5"
+        >
+          {insightPanelOpen ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+              <path d="M15 4v16" />
+              <path d="M9 10l2 2l-2 2" />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+              <path d="M15 4v16" />
+              <path d="M10 10l-2 2l2 2" />
+            </svg>
+          )}
+        </Button>
+      </div>
     </>
   );
 }

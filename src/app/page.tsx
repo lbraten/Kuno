@@ -92,9 +92,9 @@ export default function Home() {
         <main className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {!hasMessages ? (
-              <div className="flex flex-col items-center justify-center h-full px-4">
-                <div className="w-full max-w-3xl rounded-2xl border bg-card/70 shadow-sm backdrop-blur-sm md:p-8">
-                  <div className="mx-auto max-w-2xl text-center space-y-5">
+              <div className="flex h-full items-center justify-center px-4 py-6">
+                <div className="w-full max-w-3xl rounded-2xl border bg-card/70 p-6 shadow-sm backdrop-blur-sm md:p-7">
+                  <div className="mx-auto w-full max-w-2xl space-y-5 text-center">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border bg-background shadow-sm">
                       <Image
                         src="/branding/Kuno-logo.svg"
