@@ -436,7 +436,7 @@ function buildProjectInput(
   message: string
 ) {
   const policy =
-    "Instruks: Bruk kun prosjektets kunnskapsgrunnlag. Ikke bruk nettsok eller internettkilder. Hvis du mangler kildegrunnlag, svar at du mangler dokumenterte kilder.";
+    "Instruks: Bruk kun prosjektets kunnskapsgrunnlag. Ikke bruk nettsøk eller internettkilder. Hvis du har delvis relevante kilder, gi et kort og forsiktig svar basert på dem, og marker tydelig hva som er usikkert eller mangler. Avstå kun hvis du ikke har relevante kilder i det hele tatt.";
   const turns = [...history, { role: "user" as const, content: message }];
 
   const conversation = turns
