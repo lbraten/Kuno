@@ -4,6 +4,7 @@ import { Menu, Settings, Moon, Sun, Monitor } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/store/ui-store";
+import { useChatStore } from "@/store/chat-store";
 import {
   Tooltip,
   TooltipContent,
@@ -13,11 +14,11 @@ import {
 import { useEffect, useState } from "react";
 
 export function TopBar() {
+  const createConversation = useChatStore((state) => state.createConversation);
   const {
     theme,
     setTheme,
     toggleSidebar,
-    setCommandPaletteOpen,
     setSettingsOpen,
   } =
     useUIStore();
@@ -76,7 +77,12 @@ export function TopBar() {
           <Menu className="h-5 w-5" />
         </Button>
 
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={createConversation}
+          className="-ml-1 flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Ny chat"
+        >
           <Image
             src={
               resolvedTheme === "dark"
@@ -88,29 +94,10 @@ export function TopBar() {
             height={24}
             className="h-6 w-6"
           />
-          <h1 className="text-xl font-semibold">Kuno</h1>
-        </div>
+          <span className="text-xl font-semibold">Kuno</span>
+        </button>
 
         <div className="flex-1" />
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCommandPaletteOpen(true)}
-                className="hidden sm:flex gap-2"
-              >
-                <span className="text-muted-foreground">Søk...</span>
-                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                  <span className="text-xs">⌘</span>K
-                </kbd>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Kommandopalett</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
 
         <TooltipProvider>
           <Tooltip>

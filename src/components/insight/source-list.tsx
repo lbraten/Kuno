@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useChatStore } from "@/store/chat-store";
 import { useUIStore } from "@/store/ui-store";
 import { Card } from "@/components/ui/card";
-import { FileText, Building, Calendar, FileType } from "lucide-react";
+import { Building, Calendar, Download, ExternalLink, FileType } from "lucide-react";
 import { Citation } from "@/types";
 import { cn } from "@/lib/utils";
 import { getCitationSelectionKey } from "@/lib/citation-utils";
@@ -192,18 +192,20 @@ function SourceCard({
               href={citationUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-primary underline underline-offset-2"
+              className="inline-flex items-center gap-1.5 text-primary underline underline-offset-2"
             >
-              Åpne PDF
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Åpne PDF</span>
             </a>
             {downloadUrl && (
               <a
                 href={downloadUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-primary underline underline-offset-2"
+                className="inline-flex items-center gap-1.5 text-primary underline underline-offset-2"
               >
-                Last ned PDF
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Last ned PDF</span>
               </a>
             )}
           </div>
