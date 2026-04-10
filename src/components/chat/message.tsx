@@ -66,7 +66,7 @@ export function Message({ message }: MessageProps) {
           "flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full",
           isUser
             ? "bg-primary text-primary-foreground"
-            : "bg-petrol-800 text-white"
+            : "bg-udir-green-9 text-white"
         )}
       >
         {isUser ? (

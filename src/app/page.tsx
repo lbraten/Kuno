@@ -112,7 +112,7 @@ export default function Home() {
                 <div className="w-full max-w-3xl rounded-2xl border bg-card/70 p-6 shadow-sm backdrop-blur-sm md:p-7">
                   <div className="mx-auto w-full max-w-2xl space-y-5 text-center">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border bg-background shadow-sm">
-                      <comingSoonContent.Icon className="h-8 w-8 text-petrol-700" />
+                      <comingSoonContent.Icon className="h-8 w-8 text-udir-green-8" />
                     </div>
 
                     <div className="space-y-3">
@@ -120,7 +120,7 @@ export default function Home() {
                       <p className="text-muted-foreground text-lg leading-relaxed">{comingSoonContent.subtitle}</p>
                     </div>
 
-                    <div className="mx-auto max-w-xl rounded-lg border border-petrol-600 bg-petrol-200 px-4 py-3 text-sm font-medium text-petrol-800 dark:border-petrol-500 dark:bg-petrol-900/35 dark:text-petrol-200">
+                    <div className="mx-auto max-w-xl rounded-lg border border-udir-green-7 bg-udir-green-3 px-4 py-3 text-sm font-medium text-udir-green-9 dark:border-udir-green-6 dark:bg-udir-green-10/35 dark:text-udir-green-3">
                       Denne funksjonen er ikke utviklet ennå.
                     </div>
 
@@ -171,13 +171,13 @@ export default function Home() {
                     </div>
 
                     <div className="mx-auto grid max-w-xl grid-cols-1 gap-2 text-center text-sm sm:grid-cols-3">
-                      <div className="rounded-lg border border-petrol-600 bg-petrol-200 px-3 py-2 font-medium text-petrol-800 dark:border-petrol-500 dark:bg-petrol-900/35 dark:text-petrol-200">
+                      <div className="rounded-lg border border-udir-green-7 bg-udir-green-3 px-3 py-2 font-medium text-udir-green-9 dark:border-udir-green-6 dark:bg-udir-green-10/35 dark:text-udir-green-3">
                         Oppsummere funn
                       </div>
-                      <div className="rounded-lg border border-petrol-600 bg-petrol-200 px-3 py-2 font-medium text-petrol-800 dark:border-petrol-500 dark:bg-petrol-900/35 dark:text-petrol-200">
+                      <div className="rounded-lg border border-udir-green-7 bg-udir-green-3 px-3 py-2 font-medium text-udir-green-9 dark:border-udir-green-6 dark:bg-udir-green-10/35 dark:text-udir-green-3">
                         Sammenligne rapporter
                       </div>
-                      <div className="rounded-lg border border-petrol-600 bg-petrol-200 px-3 py-2 font-medium text-petrol-800 dark:border-petrol-500 dark:bg-petrol-900/35 dark:text-petrol-200">
+                      <div className="rounded-lg border border-udir-green-7 bg-udir-green-3 px-3 py-2 font-medium text-udir-green-9 dark:border-udir-green-6 dark:bg-udir-green-10/35 dark:text-udir-green-3">
                         Foresla oppfølging
                       </div>
                     </div>
