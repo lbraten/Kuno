@@ -52,7 +52,12 @@ export function InsightPanel({ children }: InsightPanelProps) {
         </div>
       </aside>
 
-      <div className="hidden lg:block fixed right-4 top-[66px] z-30">
+      <div
+        className={cn(
+          "hidden lg:block fixed top-[66px] z-[70] transition-[right] duration-300 ease-in-out",
+          insightPanelOpen ? "right-[21rem]" : "right-4"
+        )}
+      >
         <Button
           variant="outline"
           size="icon"

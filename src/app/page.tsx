@@ -18,7 +18,8 @@ import { QualityNote } from "@/components/insight/quality-note";
 import { CommandPalette } from "@/components/command-palette";
 import { useChatStore } from "@/store/chat-store";
 import { Button } from "@/components/ui/button";
-import { PanelRightOpen } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PanelRightOpen, Search, Send, SlidersHorizontal } from "lucide-react";
 import { useUIStore } from "@/store/ui-store";
 import { SettingsDialog } from "@/components/layout/settings-dialog";
 import Image from "next/image";
@@ -33,8 +34,8 @@ const EXAMPLE_PROMPTS = [
 ];
 
 export default function Home() {
-  const { messages, isStreaming, sendMessage } = useChatStore();
-  const { setInsightPanelOpen, setSidebarOpen } = useUIStore();
+  const { messages, isStreaming, sendMessage, mode } = useChatStore();
+  const { insightPanelOpen, setInsightPanelOpen, setSidebarOpen } = useUIStore();
   const { accessibility } = useUIStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -64,6 +65,21 @@ export default function Home() {
   }, [accessibility]);
 
   const hasMessages = messages.length > 0;
+  const isComingSoonMode = mode === "retrieve" || mode === "advanced";
+  const comingSoonContent =
+    mode === "retrieve"
+      ? {
+          title: "Søk-agent",
+          subtitle: "Søk er ikke utviklet ennå.",
+          hint: "Bytt tilbake til Chat for å skrive meldinger.",
+          Icon: Search,
+        }
+      : {
+          title: "Avansert søk",
+          subtitle: "Avansert søk er ikke utviklet ennå.",
+          hint: "Bytt tilbake til Chat for å skrive meldinger.",
+          Icon: SlidersHorizontal,
+        };
 
   return (
     <div className="flex flex-col h-screen">
@@ -91,7 +107,40 @@ export default function Home() {
         {/* Main Chat Area */}
         <main className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto scrollbar-thin">
-            {!hasMessages ? (
+            {isComingSoonMode ? (
+              <div className="flex h-full items-center justify-center px-4 py-6">
+                <div className="w-full max-w-3xl rounded-2xl border bg-card/70 p-6 shadow-sm backdrop-blur-sm md:p-7">
+                  <div className="mx-auto w-full max-w-2xl space-y-5 text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border bg-background shadow-sm">
+                      <comingSoonContent.Icon className="h-8 w-8 text-petrol-700" />
+                    </div>
+
+                    <div className="space-y-3">
+                      <h2 className="text-3xl font-bold tracking-tight">{comingSoonContent.title}</h2>
+                      <p className="text-muted-foreground text-lg leading-relaxed">{comingSoonContent.subtitle}</p>
+                    </div>
+
+                    <div className="mx-auto max-w-xl rounded-lg border border-petrol-600 bg-petrol-200 px-4 py-3 text-sm font-medium text-petrol-800 dark:border-petrol-500 dark:bg-petrol-900/35 dark:text-petrol-200">
+                      Denne funksjonen er ikke utviklet ennå.
+                    </div>
+
+                    <div className="mx-auto flex w-full max-w-xl gap-2">
+                      <Input
+                        disabled
+                        placeholder="Skriving er deaktivert i denne modusen"
+                        className="flex-1 text-base sm:text-sm"
+                        aria-label="Skrivefelt deaktivert"
+                      />
+                      <Button type="button" size="icon" disabled aria-label="Send deaktivert">
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">{comingSoonContent.hint}</p>
+                  </div>
+                </div>
+              </div>
+            ) : !hasMessages ? (
               <div className="flex h-full items-center justify-center px-4 py-6">
                 <div className="w-full max-w-3xl rounded-2xl border bg-card/70 p-6 shadow-sm backdrop-blur-sm md:p-7">
                   <div className="mx-auto w-full max-w-2xl space-y-5 text-center">
@@ -121,20 +170,20 @@ export default function Home() {
                     </div>
 
                     <div className="mx-auto grid max-w-xl grid-cols-1 gap-2 text-center text-sm sm:grid-cols-3">
-                      <div className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary">
+                      <div className="rounded-lg border border-petrol-600 bg-petrol-200 px-3 py-2 font-medium text-petrol-800 dark:border-petrol-500 dark:bg-petrol-900/35 dark:text-petrol-200">
                         Oppsummere funn
                       </div>
-                      <div className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary">
+                      <div className="rounded-lg border border-petrol-600 bg-petrol-200 px-3 py-2 font-medium text-petrol-800 dark:border-petrol-500 dark:bg-petrol-900/35 dark:text-petrol-200">
                         Sammenligne rapporter
                       </div>
-                      <div className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary">
+                      <div className="rounded-lg border border-petrol-600 bg-petrol-200 px-3 py-2 font-medium text-petrol-800 dark:border-petrol-500 dark:bg-petrol-900/35 dark:text-petrol-200">
                         Foresla oppfølging
                       </div>
                     </div>
 
                     <div className="pt-4 text-sm text-muted-foreground">
-                      <p className="mb-2 font-medium text-foreground">Prøv et spørsmal:</p>
-                      <p className="mb-4">Klikk på et forslag under, eller skriv ditt eget spørsmal nederst.</p>
+                      <p className="mb-2 font-medium text-foreground">Prøv et spørsmål:</p>
+                      <p className="mb-4">Klikk på et forslag under, eller skriv ditt eget spørsmål nederst.</p>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
@@ -166,7 +215,7 @@ export default function Home() {
             )}
           </div>
 
-          <ChatInput />
+          {!isComingSoonMode && <ChatInput />}
         </main>
 
         {/* Right Insight Panel */}
@@ -176,18 +225,20 @@ export default function Home() {
             <SourceList />
             <ChunkViewer />
           </div>
+        </InsightPanel>
 
-          {/* Show button when panel is hidden */}
-          <div className="lg:hidden fixed bottom-20 right-4 z-30">
+        {!insightPanelOpen && (
+          <div className="lg:hidden fixed bottom-20 right-4 z-50">
             <Button
               size="icon"
               onClick={() => setInsightPanelOpen(true)}
               className="h-12 w-12 rounded-full shadow-lg"
+              aria-label="Vis innsiktspanel"
             >
               <PanelRightOpen className="h-5 w-5" />
             </Button>
           </div>
-        </InsightPanel>
+        )}
       </div>
     </div>
   );

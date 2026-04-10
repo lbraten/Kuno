@@ -97,7 +97,7 @@ export function ChunkViewer() {
           <Card key={entry.key}>
             <CardHeader className="p-3 pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xs text-muted-foreground break-words pr-2">
+                <CardTitle className="flex-1 min-w-0 text-xs text-muted-foreground break-words pr-2">
                   {entry.title}
                 </CardTitle>
                 <Button

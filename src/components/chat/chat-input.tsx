@@ -58,8 +58,11 @@ export function ChatInput() {
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Kuno kan gjøre feil. Dobbeltsjekk viktig informasjon. Hvis Foundry ikke er satt opp, brukes demoopplevelse.
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Kuno kan gjøre feil. Dobbeltsjekk viktig informasjon.
+          <span className="ml-4 text-[11px] tracking-[0.04em] text-muted-foreground/60">
+            Utviklet av Leander Bråten, Utdanningsdirektoratet.
+          </span>
         </p>
       </form>
     </div>
