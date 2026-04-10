@@ -16,11 +16,11 @@ export function FollowUps() {
         {mockFollowUps.map((question, index) => (
           <Button
             key={index}
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => !isStreaming && sendMessage(question)}
             disabled={isStreaming}
-            className="text-left h-auto py-2 px-3 whitespace-normal"
+            className="text-left h-auto border-0 bg-secondary/60 px-3 py-2 whitespace-normal hover:bg-secondary/75"
           >
             {question}
           </Button>

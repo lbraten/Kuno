@@ -25,12 +25,12 @@ import { SettingsDialog } from "@/components/layout/settings-dialog";
 import Image from "next/image";
 
 const EXAMPLE_PROMPTS = [
-  "Hva er skolens plikter ved mobbing?",
-  "Hvordan beregnes fravær i videregående?",
-  "Hva er klagefristen etter eksamen?",
-  "Hvilke funn viser evalueringen av fagfornyelsen om implementering i skolen?",
-  "Hvordan kan kjerneelementer brukes mer systematisk i lokal planlegging?",
-  "Hva sier rapportene om vurderingspraksis og dybdelæring i LK20?",
+  "Hva viser rapportene om implementering av LK20 i grunnskolen?",
+  "Hvilke funn finnes om vurderingspraksis i videregående opplæring?",
+  "Hva sier forskningen om inkludering og læringsmiljø i skolen?",
+  "Hvilke tiltak virker mot mobbing og uønsket atferd?",
+  "Hva vet vi om overgangen fra barnehage til skole?",
+  "Hvilke funn finnes om tidlig innsats og spesialpedagogiske tiltak?",
 ];
 
 export default function Home() {
@@ -164,8 +164,9 @@ export default function Home() {
                     <div className="space-y-3">
                       <h2 className="text-3xl font-bold tracking-tight">Hei, jeg er Kuno!</h2>
                       <p className="text-muted-foreground text-lg leading-relaxed">
-                        Jeg hjelper deg med å finne og oppsummere innsikt fra rapporter om skole, læreplan og fagfornyelsen.
-                        Be meg om korte oppsummeringer, sammenligning av funn eller forslag til neste steg.
+                        Jeg hjelper deg med å finne og oppsummere innsikt fra rapporter om barnehage, grunnskole og videregående,
+                        blant annet om LK20, vurdering, inkludering og læringsmiljø.
+                        Svarene bygger på oppsummert forskning og analyser fra Utdanningsdirektoratets kunnskapssystemer.
                       </p>
                     </div>
 
