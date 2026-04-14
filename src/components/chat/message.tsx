@@ -29,6 +29,18 @@ export function Message({ message }: MessageProps) {
   const { setSelectedCitationKey, setInsightPanelOpen, accessibility } =
     useUIStore();
   const markdownMode = accessibility.markdownMode;
+  const proseTextScaleClass =
+    accessibility.textScale === "xlarge"
+      ? "prose-lg"
+      : accessibility.textScale === "large"
+        ? ""
+        : "prose-sm";
+  const preTextScaleClass =
+    accessibility.textScale === "xlarge"
+      ? "text-lg"
+      : accessibility.textScale === "large"
+        ? "text-base"
+        : "text-sm";
 
   const copyToClipboard = async () => {
     if (
@@ -82,7 +94,7 @@ export function Message({ message }: MessageProps) {
         )}
       </div>
 
-      <div className="flex-1 space-y-2 overflow-hidden">
+      <div className="flex-1 space-y-1 overflow-hidden">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm">
             {isUser ? "Du" : "Kuno"}
@@ -139,11 +151,21 @@ export function Message({ message }: MessageProps) {
         </div>
 
         {markdownMode && !isUser ? (
-          <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm leading-relaxed overflow-x-auto">
+          <pre
+            className={cn(
+              "chat-message-content whitespace-pre-wrap rounded-md border bg-muted/30 p-3 leading-relaxed overflow-x-auto",
+              preTextScaleClass
+            )}
+          >
             {message.content}
           </pre>
         ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:mt-6 prose-headings:mb-3 prose-p:my-4 prose-ul:my-4 prose-ol:my-4 prose-li:my-1 prose-blockquote:my-4">
+          <div
+            className={cn(
+              "chat-message-content prose dark:prose-invert max-w-none prose-headings:mt-5 prose-headings:mb-3 prose-p:my-4 prose-ul:my-4 prose-ol:my-4 prose-li:my-1 prose-blockquote:my-4 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+              proseTextScaleClass
+            )}
+          >
             {isUser ? (
               <p className="whitespace-pre-wrap">{message.content}</p>
             ) : (

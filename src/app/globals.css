@@ -154,6 +154,18 @@ body.a11y-extra-line-spacing {
   line-height: 1.65;
 }
 
+body.a11y-extra-line-spacing .chat-message-content {
+  line-height: 1.85;
+}
+
+body.a11y-extra-line-spacing .chat-message-content :is(p, li, blockquote, pre) {
+  line-height: 1.85;
+}
+
+body.a11y-extra-line-spacing .chat-message-content :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.4;
+}
+
 body.a11y-strong-focus :is(a, button, input, textarea, select, [tabindex]):focus-visible {
   outline: 3px solid hsl(var(--ring));
   outline-offset: 2px;
