@@ -143,7 +143,7 @@ export function Message({ message }: MessageProps) {
             {message.content}
           </pre>
         ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-3 prose-headings:mt-6 prose-headings:mb-2">
+          <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:mt-6 prose-headings:mb-3 prose-p:my-4 prose-ul:my-4 prose-ol:my-4 prose-li:my-1 prose-blockquote:my-4">
             {isUser ? (
               <p className="whitespace-pre-wrap">{message.content}</p>
             ) : (

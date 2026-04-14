@@ -137,6 +137,12 @@ function getFoundryConfig() {
   const requireGroundedOnly =
     (process.env.KUNO_REQUIRE_GROUNDED_ONLY ?? "true").toLowerCase() ===
     "true";
+  const useAppSystemPrompt =
+    (process.env.KUNO_USE_APP_SYSTEM_PROMPT ?? "false").toLowerCase() ===
+    "true";
+  const useProjectInputPolicy =
+    (process.env.KUNO_USE_PROJECT_INPUT_POLICY ?? "false").toLowerCase() ===
+    "true";
 
   const mode = endpoint ? detectEndpointMode(endpoint) : null;
 
@@ -161,6 +167,8 @@ function getFoundryConfig() {
     searchMetadataUrlField,
     mode,
     requireGroundedOnly,
+    useAppSystemPrompt,
+    useProjectInputPolicy,
     strictProjectToolAuth,
     configured: Boolean(
       endpoint && apiKey && (deployment || agentId || projectAgentName)
@@ -377,19 +385,33 @@ async function runDeploymentChat(params: {
   deployment: string;
   apiVersion: string;
   mode: EndpointMode;
+  useAppSystemPrompt: boolean;
   history: Array<{ role: "user" | "assistant"; content: string }>;
   message: string;
 }) {
-  const { endpoint, apiKey, deployment, apiVersion, mode, history, message } =
-    params;
+  const {
+    endpoint,
+    apiKey,
+    deployment,
+    apiVersion,
+    mode,
+    useAppSystemPrompt,
+    history,
+    message,
+  } = params;
   const cleanEndpoint = endpoint.replace(/\/$/, "");
   const url =
     mode === "project"
       ? `${cleanEndpoint}/openai/v1/chat/completions`
       : `${cleanEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
 
-  const messages = [
-    { role: "system", content: DEFAULT_SYSTEM_PROMPT },
+  const messages: Array<{
+    role: "system" | "user" | "assistant";
+    content: string;
+  }> = [
+    ...(useAppSystemPrompt
+      ? [{ role: "system" as const, content: DEFAULT_SYSTEM_PROMPT }]
+      : []),
     ...history,
     { role: "user", content: message },
   ];
@@ -433,8 +455,11 @@ async function runDeploymentChat(params: {
 
 function buildProjectInput(
   history: Array<{ role: "user" | "assistant"; content: string }>,
-  message: string
+  message: string,
+  options?: { includePolicy?: boolean }
 ) {
+  const includePolicy = options?.includePolicy ?? false;
+
   const policy =
     "Instruks: Bruk kun prosjektets kunnskapsgrunnlag. Ikke bruk nettsøk eller internettkilder. Hvis du har delvis relevante kilder, gi et kort og forsiktig svar basert på dem, og marker tydelig hva som er usikkert eller mangler. Avstå kun hvis du ikke har relevante kilder i det hele tatt.";
   const turns = [...history, { role: "user" as const, content: message }];
@@ -442,6 +467,10 @@ function buildProjectInput(
   const conversation = turns
     .map((turn) => `${turn.role === "assistant" ? "Assistent" : "Bruker"}: ${turn.content}`)
     .join("\n\n");
+
+  if (!includePolicy) {
+    return conversation;
+  }
 
   return `${policy}\n\n${conversation}`;
 }
@@ -790,6 +819,7 @@ async function runProjectAgentConversation(params: {
   apiKey: string;
   agentName: string;
   agentVersion?: string;
+  useProjectInputPolicy: boolean;
   allowTextUrlCitationFallback: boolean;
   searchMetadataConfig: SearchMetadataConfig | null;
   history: Array<{ role: "user" | "assistant"; content: string }>;
@@ -800,6 +830,7 @@ async function runProjectAgentConversation(params: {
     apiKey,
     agentName,
     agentVersion,
+    useProjectInputPolicy,
     allowTextUrlCitationFallback,
     searchMetadataConfig,
     history,
@@ -814,7 +845,9 @@ async function runProjectAgentConversation(params: {
       "api-key": apiKey,
     },
     body: JSON.stringify({
-      input: buildProjectInput(history, message),
+      input: buildProjectInput(history, message, {
+        includePolicy: useProjectInputPolicy,
+      }),
       agent_reference: {
         type: "agent_reference",
         name: agentName,
@@ -1030,6 +1063,8 @@ export async function POST(request: Request) {
       includeDebugDetails,
       mode,
       requireGroundedOnly,
+      useAppSystemPrompt,
+      useProjectInputPolicy,
       strictProjectToolAuth,
       configured,
     } = foundryConfig;
@@ -1061,6 +1096,8 @@ export async function POST(request: Request) {
       requireGroundedOnly,
       strictProjectToolAuth,
       allowTextUrlCitationFallback,
+      useAppSystemPrompt,
+      useProjectInputPolicy,
       historyCount: history.length,
       messageLength: userMessage.length,
     });
@@ -1074,6 +1111,7 @@ export async function POST(request: Request) {
           apiKey,
           agentName: projectAgentName,
           agentVersion: projectAgentVersion,
+          useProjectInputPolicy,
           allowTextUrlCitationFallback,
           searchMetadataConfig,
           history,
@@ -1252,6 +1290,7 @@ export async function POST(request: Request) {
       deployment,
       apiVersion,
       mode: mode ?? "openai-resource",
+      useAppSystemPrompt,
       history,
       message: userMessage,
     });
