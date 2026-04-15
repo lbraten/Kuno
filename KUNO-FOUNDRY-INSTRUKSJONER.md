@@ -100,8 +100,8 @@ npm run dev
 2. Sjekk konfig:
 
 - `GET /api/chat` skal vise `foundryConfigured: true`.
-- `mode` skal vaere `project`.
-- `projectAgentName` skal vaere riktig agent.
+- `mode` skal være `project`.
+- `projectAgentName` skal være riktig agent.
 
 3. Send testsporsmal i UI.
 
