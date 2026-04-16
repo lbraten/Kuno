@@ -2,6 +2,16 @@ import { Citation } from "@/types";
 
 const INLINE_CITATION_MARKER_REGEX = /\[(\d+)\](?!\()/g;
 
+function normalizeCitationWhitespace(text: string): string {
+  return text
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\s+([.,;:!?])/g, "$1")
+    .replace(/\(\s+/g, "(")
+    .replace(/\s+\)/g, ")")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
 export function getCitationSelectionKey(citation: Citation): string {
   const idPart = citation.id ?? "";
   const titlePart = citation.title ?? "";
@@ -35,6 +45,10 @@ export function stripInlineCitationNumbers(
   const withoutMarkers = text.replace(
     INLINE_CITATION_MARKER_REGEX,
     (match, number) => {
+      if (number === "0") {
+        return "";
+      }
+
       if (validNumbers && !validNumbers.has(number)) {
         return match;
       }
@@ -43,14 +57,7 @@ export function stripInlineCitationNumbers(
     }
   );
 
-  return withoutMarkers
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\s+([.,;:!?])/g, "$1")
-    .replace(/\(\s+/g, "(")
-    .replace(/\s+\)/g, ")")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return normalizeCitationWhitespace(withoutMarkers).trim();
 }
 
 export function linkifyInlineCitationNumbers(
@@ -59,8 +66,14 @@ export function linkifyInlineCitationNumbers(
 ): string {
   const withSpacing = normalizeInlineCitationSpacing(text);
 
-  return withSpacing.replace(INLINE_CITATION_MARKER_REGEX, (match, number) => {
+  const linked = withSpacing.replace(INLINE_CITATION_MARKER_REGEX, (match, number) => {
+    if (number === "0") {
+      return "";
+    }
+
     if (!validNumbers.has(number)) return match;
     return `[${number}](#kuno-citation-${number})`;
   });
+
+  return normalizeCitationWhitespace(linked);
 }
