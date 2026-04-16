@@ -458,21 +458,15 @@ function buildProjectInput(
   message: string,
   options?: { includePolicy?: boolean }
 ) {
-  const includePolicy = options?.includePolicy ?? false;
-
-  const policy =
-    "Instruks: Bruk kun prosjektets kunnskapsgrunnlag. Ikke bruk nettsøk eller internettkilder. Hvis du har delvis relevante kilder, gi et kort og forsiktig svar basert på dem, og marker tydelig hva som er usikkert eller mangler. Avstå kun hvis du ikke har relevante kilder i det hele tatt.";
+  // The Foundry agent controls response behavior; app forwards conversation only.
+  void options;
   const turns = [...history, { role: "user" as const, content: message }];
 
   const conversation = turns
     .map((turn) => `${turn.role === "assistant" ? "Assistent" : "Bruker"}: ${turn.content}`)
     .join("\n\n");
 
-  if (!includePolicy) {
-    return conversation;
-  }
-
-  return `${policy}\n\n${conversation}`;
+  return conversation;
 }
 
 type UrlCandidate = {
@@ -617,9 +611,9 @@ function normalizeCitationTitle(title: string | undefined, fallbackUrl?: string)
 }
 
 function stripInlineSourcePlaceholders(text: string): string {
-  // Removes tokens like 【4:1†source】 that are not user-meaningful without mapped citations.
+  // Normalize tokens like 【4:1†source】 to [1] so UI can render clickable references.
   return text
-    .replace(/【\d+:\d+†source】/g, "")
+    .replace(/【\d+:(\d+)†source】/g, "[$1]")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
