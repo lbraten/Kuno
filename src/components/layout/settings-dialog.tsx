@@ -65,6 +65,22 @@ export function SettingsDialog() {
             />
           </div>
 
+          <div className="flex items-start justify-between gap-3 rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Vis kildetall i svartekst</p>
+              <p className="text-xs text-muted-foreground">
+                Viser markorer som [1] i assistentsvar der det finnes kilder.
+              </p>
+            </div>
+            <Switch
+              checked={accessibility.showInlineCitationNumbers}
+              onCheckedChange={(checked) =>
+                setAccessibility({ showInlineCitationNumbers: checked })
+              }
+              aria-label="Vis kildetall i svartekst"
+            />
+          </div>
+
           <div className="space-y-3 rounded-md border p-3">
             <div>
               <p className="text-sm font-medium">Tekststørrelse</p>

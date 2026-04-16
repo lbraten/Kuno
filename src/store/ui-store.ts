@@ -11,6 +11,7 @@ interface UIState {
   accessibility: {
     infoBanner: boolean;
     markdownMode: boolean;
+    showInlineCitationNumbers: boolean;
     textScale: "normal" | "large" | "xlarge";
     developerMode: boolean;
     highContrast: boolean;
@@ -44,6 +45,7 @@ export const useUIStore = create<UIState>()(
       accessibility: {
         infoBanner: false,
         markdownMode: false,
+        showInlineCitationNumbers: true,
         textScale: "normal",
         developerMode: false,
         highContrast: false,

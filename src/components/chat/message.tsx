@@ -3,8 +3,9 @@
 import { Message as MessageType } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
-import { User, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
+import { User, Copy, ThumbsUp, ThumbsDown, Hash } from "lucide-react";
 import Image from "next/image";
+import type { ClipboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -16,7 +17,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useUIStore } from "@/store/ui-store";
-import { getCitationSelectionKey } from "@/lib/citation-utils";
+import { useChatStore } from "@/store/chat-store";
+import {
+  formatCitationDisplayNumber,
+  getCitationSelectionKey,
+  linkifyInlineCitationNumbers,
+  stripInlineCitationNumbers,
+} from "@/lib/citation-utils";
 
 interface MessageProps {
   message: MessageType;
@@ -26,9 +33,36 @@ export function Message({ message }: MessageProps) {
   const isUser = message.role === "user";
   const assistantSource = !isUser ? message.source ?? "mock" : null;
   const answerBasis = !isUser ? message.answerBasis : undefined;
+  const setMessageInlineCitationNumbers = useChatStore(
+    (state) => state.setMessageInlineCitationNumbers
+  );
   const { setSelectedCitationKey, setInsightPanelOpen, accessibility } =
     useUIStore();
   const markdownMode = accessibility.markdownMode;
+  const citationNumberPairs = (message.citations ?? []).map((citation, index) => {
+    const displayNumber = formatCitationDisplayNumber(citation.id, index);
+    return [displayNumber, citation] as const;
+  });
+  const inlineCitationNumbers = new Set(
+    citationNumberPairs.map(([displayNumber]) => displayNumber)
+  );
+  const citationByDisplayNumber = new Map(citationNumberPairs);
+  const showInlineCitationNumbers =
+    message.showInlineCitationNumbers ?? accessibility.showInlineCitationNumbers;
+  const contentWithoutInlineCitationNumbers = !isUser
+    ? stripInlineCitationNumbers(message.content, inlineCitationNumbers)
+    : message.content;
+  const renderedContent =
+    !isUser && !showInlineCitationNumbers
+      ? contentWithoutInlineCitationNumbers
+      : message.content;
+  const markdownContent =
+    !isUser &&
+    showInlineCitationNumbers &&
+    inlineCitationNumbers.size > 0 &&
+    !markdownMode
+      ? linkifyInlineCitationNumbers(message.content, inlineCitationNumbers)
+      : renderedContent;
   const proseTextScaleClass =
     accessibility.textScale === "xlarge"
       ? "prose-lg"
@@ -43,19 +77,23 @@ export function Message({ message }: MessageProps) {
         : "text-sm";
 
   const copyToClipboard = async () => {
+    const textToCopy = !isUser
+      ? contentWithoutInlineCitationNumbers
+      : message.content;
+
     if (
       typeof navigator !== "undefined" &&
       navigator.clipboard &&
       typeof navigator.clipboard.writeText === "function"
     ) {
-      await navigator.clipboard.writeText(message.content);
+      await navigator.clipboard.writeText(textToCopy);
       return;
     }
 
     // Fallback for environments where Clipboard API is unavailable.
     if (typeof document !== "undefined") {
       const textArea = document.createElement("textarea");
-      textArea.value = message.content;
+      textArea.value = textToCopy;
       textArea.setAttribute("readonly", "");
       textArea.style.position = "fixed";
       textArea.style.opacity = "0";
@@ -64,6 +102,28 @@ export function Message({ message }: MessageProps) {
       document.execCommand("copy");
       document.body.removeChild(textArea);
     }
+  };
+
+  const handleAssistantCopy = (event: ClipboardEvent<HTMLElement>) => {
+    if (isUser) return;
+
+    const selectedText =
+      typeof window !== "undefined" ? window.getSelection()?.toString() ?? "" : "";
+    const sourceText = selectedText.trim().length > 0 ? selectedText : message.content;
+
+    event.preventDefault();
+    event.clipboardData.setData(
+      "text/plain",
+      stripInlineCitationNumbers(sourceText, inlineCitationNumbers)
+    );
+  };
+
+  const openInlineCitation = (displayNumber: string) => {
+    const citation = citationByDisplayNumber.get(displayNumber);
+    if (!citation) return;
+
+    setSelectedCitationKey(getCitationSelectionKey(citation));
+    setInsightPanelOpen(true);
   };
 
   return (
@@ -156,8 +216,9 @@ export function Message({ message }: MessageProps) {
               "chat-message-content whitespace-pre-wrap rounded-md border bg-muted/30 p-3 leading-relaxed overflow-x-auto",
               preTextScaleClass
             )}
+            onCopy={handleAssistantCopy}
           >
-            {message.content}
+            {renderedContent}
           </pre>
         ) : (
           <div
@@ -165,12 +226,48 @@ export function Message({ message }: MessageProps) {
               "chat-message-content prose dark:prose-invert max-w-none prose-headings:mt-5 prose-headings:mb-3 prose-p:my-4 prose-ul:my-4 prose-ol:my-4 prose-li:my-1 prose-blockquote:my-4 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
               proseTextScaleClass
             )}
+            onCopy={!isUser ? handleAssistantCopy : undefined}
           >
             {isUser ? (
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              <p className="whitespace-pre-wrap">{renderedContent}</p>
             ) : (
-              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-                {message.content}
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkBreaks]}
+                components={{
+                  a: ({ href, children }) => {
+                    const citationMatch = href?.match(/^#kuno-citation-(\d+)$/);
+                    if (citationMatch?.[1]) {
+                      const displayNumber = citationMatch[1];
+
+                      return citationByDisplayNumber.has(displayNumber) ? (
+                        <button
+                          type="button"
+                          className="mx-0.5 inline-flex items-center rounded border border-secondary/60 bg-secondary px-1.5 py-0.5 text-[11px] leading-none text-secondary-foreground hover:bg-secondary/80"
+                          onClick={() => openInlineCitation(displayNumber)}
+                        >
+                          [{displayNumber}]
+                        </button>
+                      ) : (
+                        <span>[{displayNumber}]</span>
+                      );
+                    }
+
+                    if (!href) {
+                      return <span>{children}</span>;
+                    }
+
+                    return (
+                      <a
+                        href={href}
+                        className="text-primary underline underline-offset-2"
+                      >
+                        {children}
+                      </a>
+                    );
+                  },
+                }}
+              >
+                {markdownContent}
               </ReactMarkdown>
             )}
           </div>
@@ -178,7 +275,7 @@ export function Message({ message }: MessageProps) {
 
         {!isUser && !markdownMode && message.citations && message.citations.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
-            {message.citations.map((citation) => (
+            {citationNumberPairs.map(([displayNumber, citation]) => (
               <button
                 key={citation.id}
                 className="text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-secondary/60 px-2 py-1 rounded transition-colors"
@@ -187,7 +284,7 @@ export function Message({ message }: MessageProps) {
                   setInsightPanelOpen(true);
                 }}
               >
-                [{citation.id}] {citation.title}
+                [{displayNumber}] {citation.title}
               </button>
             ))}
           </div>
@@ -210,6 +307,43 @@ export function Message({ message }: MessageProps) {
                 <TooltipContent>Kopier</TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            {message.citations && message.citations.length > 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() =>
+                        setMessageInlineCitationNumbers(
+                          message.id,
+                          !showInlineCitationNumbers
+                        )
+                      }
+                      aria-label={
+                        showInlineCitationNumbers
+                          ? "Skjul kildetall i teksten"
+                          : "Vis kildetall i teksten"
+                      }
+                    >
+                      <Hash
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          showInlineCitationNumbers && "text-primary"
+                        )}
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {showInlineCitationNumbers
+                      ? "Skjul kildetall"
+                      : "Vis kildetall"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
 
             <TooltipProvider>
               <Tooltip>
