@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mockChunks } from "@/lib/mock-data";
 import { useChatStore } from "@/store/chat-store";
+import { useUIStore } from "@/store/ui-store";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +12,7 @@ type ChunkEntry = {
   key: string;
   title: string;
   chunkId?: string;
+  content?: string;
 };
 
 function isLikelyUrl(value: string): boolean {
@@ -19,6 +21,9 @@ function isLikelyUrl(value: string): boolean {
 
 export function ChunkViewer() {
   const { messages } = useChatStore();
+  const developerMode = Boolean(
+    useUIStore((state) => state.accessibility.developerMode)
+  );
   const [expandedChunks, setExpandedChunks] = useState<Set<string>>(new Set());
   const [showReferences, setShowReferences] = useState<Set<string>>(new Set());
 
@@ -36,17 +41,27 @@ export function ChunkViewer() {
       const chunkId = citation.chunkId;
       const title = citation.title?.trim() || "Kilde";
       const key = chunkId ? `${title}|${chunkId}` : title;
+      const content = chunkId ? mockChunks[chunkId] : undefined;
 
       return {
         key,
         title,
         chunkId,
+        content,
       } as ChunkEntry;
     })
     .filter(
       (entry, index, self) =>
         index === self.findIndex((candidate) => candidate.key === entry.key)
     );
+
+  const visibleChunkEntries = developerMode
+    ? chunkEntries
+    : chunkEntries.filter((entry) => Boolean(entry.content));
+
+  if (!developerMode && visibleChunkEntries.length === 0) {
+    return null;
+  }
 
   const toggleChunk = (chunkKey: string) => {
     const newExpanded = new Set(expandedChunks);
@@ -68,7 +83,7 @@ export function ChunkViewer() {
     setShowReferences(next);
   };
 
-  if (chunkEntries.length === 0) {
+  if (visibleChunkEntries.length === 0) {
     return (
       <div className="text-sm text-muted-foreground text-center py-8">
         {isFoundryWithoutChunks
@@ -81,11 +96,11 @@ export function ChunkViewer() {
   return (
     <div className="space-y-3">
       <h3 className="font-semibold text-sm">Tekstutdrag</h3>
-      {chunkEntries.map((entry) => {
+      {visibleChunkEntries.map((entry) => {
         const isExpanded = expandedChunks.has(entry.key);
         const chunkReference = entry.chunkId;
         const content =
-          (chunkReference ? mockChunks[chunkReference] : undefined) ??
+          entry.content ??
           "Tekstutdrag ble ikke returnert av agenten for denne kilden.";
         const hasTechnicalReference = Boolean(chunkReference);
         const isReferenceVisible = showReferences.has(entry.key);

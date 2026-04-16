@@ -12,6 +12,7 @@ interface UIState {
     infoBanner: boolean;
     markdownMode: boolean;
     textScale: "normal" | "large" | "xlarge";
+    developerMode: boolean;
     highContrast: boolean;
     reducedMotion: boolean;
     dyslexicFont: boolean;
@@ -44,6 +45,7 @@ export const useUIStore = create<UIState>()(
         infoBanner: false,
         markdownMode: false,
         textScale: "normal",
+        developerMode: false,
         highContrast: false,
         reducedMotion: false,
         dyslexicFont: false,

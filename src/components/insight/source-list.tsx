@@ -120,6 +120,9 @@ function SourceCard({
   highlighted: boolean;
 }) {
   const [showChunkLink, setShowChunkLink] = useState(false);
+  const developerMode = Boolean(
+    useUIStore((state) => state.accessibility.developerMode)
+  );
   const citationUrl = getCitationUrl(citation);
   const downloadUrl =
     citationUrl && citationUrl.startsWith("/api/source-file")
@@ -169,7 +172,7 @@ function SourceCard({
           )}
         </div>
 
-        {citation.chunkId && (
+        {developerMode && citation.chunkId && (
           <div className="space-y-1">
             <button
               type="button"

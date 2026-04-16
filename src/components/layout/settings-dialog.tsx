@@ -212,6 +212,28 @@ export function SettingsDialog() {
               aria-label="Aktiver tydelig fokusmarkering"
             />
           </div>
+
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Utvikler
+            </h3>
+          </div>
+
+          <div className="flex items-start justify-between gap-3 rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Utviklermodus</p>
+              <p className="text-xs text-muted-foreground">
+                Viser tekniske detaljer som chunk-lenker og tekstutdrag uten innhold.
+              </p>
+            </div>
+            <Switch
+              checked={Boolean(accessibility.developerMode)}
+              onCheckedChange={(checked) =>
+                setAccessibility({ developerMode: checked })
+              }
+              aria-label="Aktiver utviklermodus"
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
