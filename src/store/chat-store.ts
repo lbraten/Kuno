@@ -14,7 +14,6 @@ import {
   mockFollowUps,
 } from "@/lib/mock-data";
 import { sleep } from "@/lib/utils";
-import { useUIStore } from "@/store/ui-store";
 
 type Uncertainty = "low" | "medium" | "high";
 
@@ -77,7 +76,6 @@ interface ChatState {
   setFilter: (filter: Partial<Filter>) => void;
   setMode: (mode: Mode) => void;
   setRetrieveConfig: (config: Partial<RetrieveConfig>) => void;
-  setMessageInlineCitationNumbers: (messageId: string, show: boolean) => void;
   deleteConversation: (id: string) => void;
 }
 
@@ -159,18 +157,6 @@ function withConversationUpdated(
   return sortConversationsByUpdatedAt(next);
 }
 
-function withConversationMessagesPatched(
-  conversations: Conversation[],
-  conversationId: string,
-  nextMessages: Message[]
-): Conversation[] {
-  return conversations.map((conversation) =>
-    conversation.id === conversationId
-      ? { ...conversation, messages: nextMessages }
-      : conversation
-  );
-}
-
 function isEmptyDraftConversation(conversation: Conversation): boolean {
   return conversation.title === "Ny samtale" && conversation.messages.length === 0;
 }
@@ -226,8 +212,6 @@ export const useChatStore = create<ChatState>()(
 
       sendMessage: async (content: string) => {
         let { currentConversationId, conversations, messages } = get();
-        const defaultShowInlineCitationNumbers =
-          useUIStore.getState().accessibility.showInlineCitationNumbers;
 
         if (!currentConversationId) {
           const now = new Date().toISOString();
@@ -318,7 +302,6 @@ export const useChatStore = create<ChatState>()(
             id: `msg-${Date.now()}-assistant`,
             role: "assistant",
             content: "",
-            showInlineCitationNumbers: defaultShowInlineCitationNumbers,
             source: "foundry",
             citations: payload.citations ?? [],
             uncertainty: payload.uncertainty ?? "low",
@@ -366,7 +349,6 @@ export const useChatStore = create<ChatState>()(
             id: `msg-${Date.now()}-assistant-fallback`,
             role: "assistant",
             content: "",
-            showInlineCitationNumbers: defaultShowInlineCitationNumbers,
             source: "mock",
             citations: mockCitationsForTopic,
             uncertainty: topicConfig.uncertainty,
@@ -428,29 +410,6 @@ export const useChatStore = create<ChatState>()(
         set((state) => ({
           retrieveConfig: { ...state.retrieveConfig, ...config },
         }));
-      },
-
-      setMessageInlineCitationNumbers: (messageId: string, show: boolean) => {
-        set((state) => {
-          const nextMessages = state.messages.map((message) =>
-            message.id === messageId
-              ? { ...message, showInlineCitationNumbers: show }
-              : message
-          );
-
-          if (!state.currentConversationId) {
-            return { messages: nextMessages };
-          }
-
-          return {
-            messages: nextMessages,
-            conversations: withConversationMessagesPatched(
-              state.conversations,
-              state.currentConversationId,
-              nextMessages
-            ),
-          };
-        });
       },
 
       deleteConversation: (id: string) => {

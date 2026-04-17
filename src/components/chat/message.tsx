@@ -3,7 +3,7 @@
 import { Message as MessageType } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
-import { User, Copy, ThumbsUp, ThumbsDown, Hash } from "lucide-react";
+import { User, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 import Image from "next/image";
 import type { ClipboardEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useUIStore } from "@/store/ui-store";
-import { useChatStore } from "@/store/chat-store";
 import {
   formatCitationDisplayNumber,
   getCitationSelectionKey,
@@ -33,9 +32,6 @@ export function Message({ message }: MessageProps) {
   const isUser = message.role === "user";
   const assistantSource = !isUser ? message.source ?? "mock" : null;
   const answerBasis = !isUser ? message.answerBasis : undefined;
-  const setMessageInlineCitationNumbers = useChatStore(
-    (state) => state.setMessageInlineCitationNumbers
-  );
   const { setSelectedCitationKey, setInsightPanelOpen, accessibility } =
     useUIStore();
   const markdownMode = accessibility.markdownMode;
@@ -48,7 +44,7 @@ export function Message({ message }: MessageProps) {
   );
   const citationByDisplayNumber = new Map(citationNumberPairs);
   const showInlineCitationNumbers =
-    message.showInlineCitationNumbers ?? accessibility.showInlineCitationNumbers;
+    accessibility.showInlineCitationNumbers !== false;
   const contentWithoutInlineCitationNumbers = !isUser
     ? stripInlineCitationNumbers(message.content, inlineCitationNumbers)
     : message.content;
@@ -307,43 +303,6 @@ export function Message({ message }: MessageProps) {
                 <TooltipContent>Kopier</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-
-            {message.citations && message.citations.length > 0 && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() =>
-                        setMessageInlineCitationNumbers(
-                          message.id,
-                          !showInlineCitationNumbers
-                        )
-                      }
-                      aria-label={
-                        showInlineCitationNumbers
-                          ? "Skjul kildetall i teksten"
-                          : "Vis kildetall i teksten"
-                      }
-                    >
-                      <Hash
-                        className={cn(
-                          "h-3.5 w-3.5",
-                          showInlineCitationNumbers && "text-primary"
-                        )}
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {showInlineCitationNumbers
-                      ? "Skjul kildetall"
-                      : "Vis kildetall"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
 
             <TooltipProvider>
               <Tooltip>

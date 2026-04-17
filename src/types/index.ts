@@ -15,7 +15,6 @@ export interface Message {
   id: string;
   role: Role;
   content: string;
-  showInlineCitationNumbers?: boolean;
   citations?: Citation[];
   uncertainty?: "low" | "medium" | "high";
   answerBasis?: "grounded" | "general" | "blocked";

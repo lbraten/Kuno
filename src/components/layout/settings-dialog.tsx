@@ -73,7 +73,7 @@ export function SettingsDialog() {
               </p>
             </div>
             <Switch
-              checked={accessibility.showInlineCitationNumbers}
+              checked={accessibility.showInlineCitationNumbers !== false}
               onCheckedChange={(checked) =>
                 setAccessibility({ showInlineCitationNumbers: checked })
               }
