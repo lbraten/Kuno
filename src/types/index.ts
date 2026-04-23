@@ -47,7 +47,7 @@ export type DataScope =
   | "spesialundervisning-og-tilpasset-opplaering";
 
 export interface Filter {
-  scope: DataScope;
+  scopes: DataScope[];
 }
 
 export type Mode = "chat" | "retrieve" | "advanced";

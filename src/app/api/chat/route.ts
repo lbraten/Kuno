@@ -36,6 +36,7 @@ type ChatRequestBody = {
   message?: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
   scope?: ScopeId | string;
+  scopes?: Array<ScopeId | string>;
 };
 
 type Uncertainty = "low" | "medium" | "high";
@@ -116,6 +117,21 @@ function resolveScopeId(scope: unknown): ScopeId {
   return SCOPE_ALIAS_MAP.get(normalizedScope) ?? "all";
 }
 
+function resolveScopeIds(scopeInput: unknown, legacyScopeInput?: unknown): ScopeId[] {
+  const scopeCandidates = [
+    ...(Array.isArray(scopeInput) ? scopeInput : scopeInput !== undefined ? [scopeInput] : []),
+    ...(legacyScopeInput !== undefined ? [legacyScopeInput] : []),
+  ];
+
+  const resolved = Array.from(new Set(scopeCandidates.map(resolveScopeId)));
+
+  if (resolved.length === 0 || resolved.includes("all")) {
+    return ["all"];
+  }
+
+  return resolved;
+}
+
 function getScopeEnvPrefix(scopeId: ThematicScopeId): string {
   return `KUNO_SCOPE_${scopeId.toUpperCase().replace(/-/g, "_")}`;
 }
@@ -160,22 +176,52 @@ function getScopeConfig(scopeId: ScopeId): ScopeConfig {
   };
 }
 
-function buildScopeInstruction(scope: ScopeConfig): string | null {
-  if (scope.id === "all") return null;
+function getScopeConfigs(scopeIds: ScopeId[]): ScopeConfig[] {
+  if (scopeIds.length === 0 || scopeIds.includes("all")) {
+    return [getScopeConfig("all")];
+  }
 
-  const terms = scope.includeTerms
-    .map((term) => term.trim())
-    .filter(Boolean)
+  return scopeIds.map((scopeId) => getScopeConfig(scopeId));
+}
+
+function buildScopeSearchFilter(scopeConfigs: ScopeConfig[]): string | undefined {
+  const filters = Array.from(
+    new Set(
+      scopeConfigs
+        .map((scopeConfig) => scopeConfig.searchFilter?.trim())
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+
+  if (filters.length === 0) return undefined;
+  if (filters.length === 1) return filters[0];
+
+  return filters.map((filter) => `(${filter})`).join(" or ");
+}
+
+function buildScopeInstruction(scopeConfigs: ScopeConfig[]): string | null {
+  if (scopeConfigs.some((scopeConfig) => scopeConfig.id === "all")) return null;
+
+  const labels = scopeConfigs.map((scopeConfig) => scopeConfig.label).join(", ");
+  const terms = Array.from(
+    new Set(
+      scopeConfigs
+        .flatMap((scopeConfig) => scopeConfig.includeTerms)
+        .map((term) => term.trim())
+        .filter(Boolean)
+    )
+  )
+    .slice(0, 24)
     .join(", ");
 
   return [
-    `Datagrunnlag: ${scope.label}.`,
-    "Bruk kun kilder som matcher valgt datagrunnlag.",
+    `Datagrunnlag: ${labels}.`,
+    "Bruk kun kilder som matcher ett eller flere valgte datagrunnlag.",
     terms
       ? `Behandle disse termene som inkluderingskrav: ${terms}.`
       : null,
-    "Hvis du ikke finner relevante kilder i valgt datagrunnlag, si tydelig fra om dette.",
-    "Ikke bruk eller oppgi kilder utenfor valgt datagrunnlag.",
+    "Hvis du ikke finner relevante kilder i valgte datagrunnlag, si tydelig fra om dette.",
+    "Ikke bruk eller oppgi kilder utenfor valgte datagrunnlag.",
   ]
     .filter((item): item is string => Boolean(item))
     .join(" ");
@@ -197,12 +243,20 @@ function citationMatchesScope(citation: Citation, scope: ScopeConfig): boolean {
   });
 }
 
+function citationMatchesAnyScope(citation: Citation, scopeConfigs: ScopeConfig[]): boolean {
+  if (scopeConfigs.some((scopeConfig) => scopeConfig.id === "all")) return true;
+  return scopeConfigs.some((scopeConfig) => citationMatchesScope(citation, scopeConfig));
+}
+
 function filterCitationsByScope(
   citations: Citation[],
-  scope: ScopeConfig
+  scopeConfigs: ScopeConfig[]
 ): Citation[] {
-  if (scope.id === "all") return citations;
-  return citations.filter((citation) => citationMatchesScope(citation, scope));
+  if (scopeConfigs.some((scopeConfig) => scopeConfig.id === "all")) {
+    return citations;
+  }
+
+  return citations.filter((citation) => citationMatchesAnyScope(citation, scopeConfigs));
 }
 
 function getUncertaintyFromFilters(filters?: ContentFilterResults): Uncertainty {
@@ -906,9 +960,10 @@ async function resolveCitationsFromSearchMetadata(params: {
   }>;
   userMessage: string;
   config: SearchMetadataConfig;
-  scope: ScopeConfig;
+  scopeConfigs: ScopeConfig[];
 }) {
-  const { annotations, userMessage, config, scope } = params;
+  const { annotations, userMessage, config, scopeConfigs } = params;
+  const scopeSearchFilter = buildScopeSearchFilter(scopeConfigs);
 
   const terms = new Set<string>();
 
@@ -935,7 +990,7 @@ async function resolveCitationsFromSearchMetadata(params: {
         config,
         query: term,
         top: 5,
-        searchFilter: scope.searchFilter,
+        searchFilter: scopeSearchFilter,
       });
 
       for (const hit of hits) {
@@ -986,7 +1041,7 @@ async function resolveCitationsFromSearchMetadata(params: {
           chunkId: url,
         };
 
-        if (!citationMatchesScope(candidateCitation, scope)) continue;
+        if (!citationMatchesAnyScope(candidateCitation, scopeConfigs)) continue;
 
         citationByUrl.set(url, {
           ...candidateCitation,
@@ -1020,7 +1075,7 @@ async function runProjectAgentConversation(params: {
   useProjectInputPolicy: boolean;
   allowTextUrlCitationFallback: boolean;
   searchMetadataConfig: SearchMetadataConfig | null;
-  scope: ScopeConfig;
+  scopeConfigs: ScopeConfig[];
   scopeInstruction: string | null;
   history: Array<{ role: "user" | "assistant"; content: string }>;
   message: string;
@@ -1033,7 +1088,7 @@ async function runProjectAgentConversation(params: {
     useProjectInputPolicy,
     allowTextUrlCitationFallback,
     searchMetadataConfig,
-    scope,
+    scopeConfigs,
     scopeInstruction,
     history,
     message,
@@ -1106,7 +1161,7 @@ async function runProjectAgentConversation(params: {
     isUsablePublicSourceUrl(citation.url ?? citation.chunkId)
   );
   const scopedAnnotationCitations = publicAnnotationCitations.filter((citation) =>
-    citationMatchesScope(citation, scope)
+    citationMatchesAnyScope(citation, scopeConfigs)
   );
 
   const rawContentText =
@@ -1118,7 +1173,7 @@ async function runProjectAgentConversation(params: {
   const verifiedUrlCitations =
     allowTextUrlCitationFallback && scopedAnnotationCitations.length === 0
       ? (await buildVerifiedUrlCitations(contentText)).filter((citation) =>
-          citationMatchesScope(citation, scope)
+          citationMatchesAnyScope(citation, scopeConfigs)
         )
       : [];
 
@@ -1128,7 +1183,7 @@ async function runProjectAgentConversation(params: {
           annotations,
           userMessage: message,
           config: searchMetadataConfig,
-          scope,
+          scopeConfigs,
         })
       : [];
 
@@ -1155,7 +1210,7 @@ async function runProjectAgentConversation(params: {
       filteredAnnotationCitationCount,
       nonPublicAnnotationCitationCount,
       outOfScopeAnnotationCitationCount,
-      scope: scope.id,
+      scopes: scopeConfigs.map((scopeConfig) => scopeConfig.id),
     });
   }
 
@@ -1170,7 +1225,7 @@ async function runProjectAgentConversation(params: {
       mode: "project",
       agentName,
       agentVersion: agentVersion ?? null,
-      scope: scope.id,
+      scopes: scopeConfigs.map((scopeConfig) => scopeConfig.id),
       annotations: annotations.length,
       annotationCitations: annotationCitations.length,
       publicAnnotationCitations: publicAnnotationCitations.length,
@@ -1268,9 +1323,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const scopeId = resolveScopeId(body.scope);
-    const scopeConfig = getScopeConfig(scopeId);
-    const scopeInstruction = buildScopeInstruction(scopeConfig);
+    const scopeIds = resolveScopeIds(body.scopes, body.scope);
+    const scopeConfigs = getScopeConfigs(scopeIds);
+    const scopeInstruction = buildScopeInstruction(scopeConfigs);
+    const scopeSearchFilter = buildScopeSearchFilter(scopeConfigs);
+    const scopeTermCount = Array.from(
+      new Set(scopeConfigs.flatMap((scopeConfig) => scopeConfig.includeTerms))
+    ).length;
 
     const foundryConfig = getFoundryConfig();
 
@@ -1323,9 +1382,9 @@ export async function POST(request: Request) {
       allowTextUrlCitationFallback,
       useAppSystemPrompt,
       useProjectInputPolicy,
-      scope: scopeConfig.id,
-      scopeSearchFilterEnabled: Boolean(scopeConfig.searchFilter),
-      scopeTermCount: scopeConfig.includeTerms.length,
+      scopes: scopeIds,
+      scopeSearchFilterEnabled: Boolean(scopeSearchFilter),
+      scopeTermCount,
       historyCount: history.length,
       messageLength: userMessage.length,
     });
@@ -1342,7 +1401,7 @@ export async function POST(request: Request) {
           useProjectInputPolicy,
           allowTextUrlCitationFallback,
           searchMetadataConfig,
-          scope: scopeConfig,
+          scopeConfigs,
           scopeInstruction,
           history,
           message: userMessage,
@@ -1350,7 +1409,7 @@ export async function POST(request: Request) {
 
         const scopedProjectCitations = filterCitationsByScope(
           projectAgentResult.citations,
-          scopeConfig
+          scopeConfigs
         );
         const filteredByScopeCount =
           projectAgentResult.citations.length - scopedProjectCitations.length;
@@ -1364,7 +1423,7 @@ export async function POST(request: Request) {
 
         if (filteredByScopeCount > 0) {
           logChatEvent("warn", "project.response_scope_filtered", {
-            scope: scopeConfig.id,
+            scopes: scopeIds,
             citationsBeforeScopeFilter: projectAgentResult.citations.length,
             citationsAfterScopeFilter: scopedProjectCitations.length,
             filteredByScopeCount,
@@ -1374,7 +1433,7 @@ export async function POST(request: Request) {
         logChatEvent("info", "project.response", {
           answerBasis: normalizedProjectResult.answerBasis,
           citationCount: normalizedProjectResult.citations.length,
-          scope: scopeConfig.id,
+          scopes: scopeIds,
           diagnostics: normalizedProjectResult.diagnostics,
         });
 
@@ -1383,7 +1442,7 @@ export async function POST(request: Request) {
             reason: "grounded_only_no_citations",
             mode,
             projectAgentName,
-            scope: scopeConfig.id,
+            scopes: scopeIds,
             diagnostics: normalizedProjectResult.diagnostics,
           };
 
@@ -1401,7 +1460,7 @@ export async function POST(request: Request) {
         logChatEvent("error", "project.call_failed", {
           mode,
           projectAgentName,
-          scope: scopeConfig.id,
+          scopes: scopeIds,
           error: agentError,
         });
 
@@ -1417,7 +1476,7 @@ export async function POST(request: Request) {
                       reason: "project_call_failed_obo_auth_mismatch",
                       mode,
                       projectAgentName,
-                      scope: scopeConfig.id,
+                      scopes: scopeIds,
                     },
                   }
                 : {}),
@@ -1432,7 +1491,7 @@ export async function POST(request: Request) {
             projectAgentName,
             strictProjectToolAuth,
             fallback: "deployment",
-            scope: scopeConfig.id,
+            scopes: scopeIds,
           });
         }
       }
@@ -1462,7 +1521,7 @@ export async function POST(request: Request) {
                     reason: "project_call_failed",
                     mode,
                     projectAgentName,
-                    scope: scopeConfig.id,
+                    scopes: scopeIds,
                   },
                 }
               : {}),
@@ -1484,7 +1543,7 @@ export async function POST(request: Request) {
 
         const scopedAgentCitations = filterCitationsByScope(
           agentResult.citations,
-          scopeConfig
+          scopeConfigs
         );
         const scopedAgentResult = {
           ...agentResult,
@@ -1496,7 +1555,7 @@ export async function POST(request: Request) {
 
         if (scopedAgentCitations.length !== agentResult.citations.length) {
           logChatEvent("warn", "assistant.response_scope_filtered", {
-            scope: scopeConfig.id,
+            scopes: scopeIds,
             citationsBeforeScopeFilter: agentResult.citations.length,
             citationsAfterScopeFilter: scopedAgentCitations.length,
           });
@@ -1507,7 +1566,7 @@ export async function POST(request: Request) {
             reason: "grounded_only_no_citations",
             mode,
             agentId,
-            scope: scopeConfig.id,
+            scopes: scopeIds,
             citationCount: scopedAgentResult.citations.length,
           };
 
@@ -1525,7 +1584,7 @@ export async function POST(request: Request) {
         logChatEvent("error", "assistant.call_failed", {
           mode,
           agentId,
-          scope: scopeConfig.id,
+          scopes: scopeIds,
           error: agentError,
         });
 
@@ -1546,7 +1605,7 @@ export async function POST(request: Request) {
                     reason: "assistant_call_failed",
                     mode,
                     agentId,
-                    scope: scopeConfig.id,
+                    scopes: scopeIds,
                   },
                 }
               : {}),
@@ -1584,7 +1643,7 @@ export async function POST(request: Request) {
         reason: "grounded_only_no_citations",
         mode,
         deployment,
-        scope: scopeConfig.id,
+        scopes: scopeIds,
         citationCount: completionResult.citations.length,
       };
 

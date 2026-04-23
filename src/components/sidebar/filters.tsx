@@ -16,24 +16,56 @@ import { cn } from "@/lib/utils";
 import { DATA_SCOPE_OPTIONS } from "@/lib/data-scopes";
 import type { DataScope } from "@/types";
 
+const ALL_SCOPE: DataScope = "all";
+const THEME_SCOPE_OPTIONS = DATA_SCOPE_OPTIONS.filter(
+  (option) => option.value !== ALL_SCOPE
+);
+
 export function Filters() {
   const { filter, setFilter } = useChatStore();
   const [open, setOpen] = useState(false);
 
-  const setScope = (scope: DataScope) => {
-    setFilter({ scope });
+  const selectedScopes = filter.scopes.length > 0 ? filter.scopes : [ALL_SCOPE];
+
+  const setScopes = (scopes: DataScope[]) => {
+    setFilter({ scopes });
+  };
+
+  const isScopeSelected = (scope: DataScope) => {
+    return selectedScopes.includes(scope);
+  };
+
+  const toggleScope = (scope: DataScope) => {
+    if (scope === ALL_SCOPE) {
+      setScopes([ALL_SCOPE]);
+      return;
+    }
+
+    const nextSet = new Set(selectedScopes);
+    nextSet.delete(ALL_SCOPE);
+
+    if (nextSet.has(scope)) {
+      nextSet.delete(scope);
+    } else {
+      nextSet.add(scope);
+    }
+
+    const nextScopes = Array.from(nextSet) as DataScope[];
+    setScopes(nextScopes.length > 0 ? nextScopes : [ALL_SCOPE]);
   };
 
   const clearFilters = () => {
-    setFilter({
-      scope: "all",
-    });
+    setScopes([ALL_SCOPE]);
   };
 
-  const activeFilterCount = filter.scope === "all" ? 0 : 1;
-  const selectedScopeOption = DATA_SCOPE_OPTIONS.find(
-    (option) => option.value === filter.scope
+  const selectedScopedOptions = DATA_SCOPE_OPTIONS.filter(
+    (option) => option.value !== ALL_SCOPE && selectedScopes.includes(option.value)
   );
+  const activeFilterCount = selectedScopedOptions.length;
+  const selectedLabelPreview = selectedScopedOptions
+    .slice(0, 2)
+    .map((option) => option.label)
+    .join(", ");
 
   return (
     <div className="space-y-2">
@@ -57,30 +89,50 @@ export function Filters() {
           <DialogHeader>
             <DialogTitle>Datagrunnlag</DialogTitle>
             <DialogDescription>
-              Velg hvilke rapportkategorier modellen kan bruke i svarene.
+              Velg en eller flere rapportkategorier modellen kan bruke i svarene.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 mt-4">
+          <div className="space-y-4 mt-4">
             <div>
-              <h4 className="font-medium mb-3">Datagrunnlag</h4>
-              <div className="grid gap-2">
-                {DATA_SCOPE_OPTIONS.map((option) => (
-                  <button
+              <h4 className="font-medium mb-2">Datagrunnlag</h4>
+
+              <label
+                className={cn(
+                  "flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm cursor-pointer",
+                  isScopeSelected(ALL_SCOPE)
+                    ? "border-primary/70 bg-primary/10"
+                    : "border-input hover:bg-secondary/25"
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={isScopeSelected(ALL_SCOPE)}
+                  onChange={() => toggleScope(ALL_SCOPE)}
+                  className="h-3.5 w-3.5 accent-primary"
+                />
+                <span>Alle rapporter</span>
+              </label>
+
+              <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {THEME_SCOPE_OPTIONS.map((option) => (
+                  <label
                     key={option.value}
-                    type="button"
-                    onClick={() => setScope(option.value)}
                     className={cn(
-                      "w-full rounded-lg border p-3 text-left transition-colors",
-                      filter.scope === option.value
+                      "flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm leading-snug cursor-pointer",
+                      isScopeSelected(option.value)
                         ? "border-primary/70 bg-primary/10"
-                        : "border-input hover:bg-secondary/40"
+                        : "border-input hover:bg-secondary/25"
                     )}
-                    aria-pressed={filter.scope === option.value}
                   >
-                    <p className="text-sm font-medium">{option.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{option.description}</p>
-                  </button>
+                    <input
+                      type="checkbox"
+                      checked={isScopeSelected(option.value)}
+                      onChange={() => toggleScope(option.value)}
+                      className="h-3.5 w-3.5 accent-primary shrink-0"
+                    />
+                    <span>{option.label}</span>
+                  </label>
                 ))}
               </div>
             </div>
@@ -99,7 +151,8 @@ export function Filters() {
       {activeFilterCount > 0 && (
         <div className="space-y-1">
           <div className="text-xs bg-secondary text-secondary-foreground border border-secondary/60 px-2 py-1 rounded truncate">
-            Datagrunnlag: {selectedScopeOption?.label ?? "Ukjent"}
+            Datagrunnlag: {selectedLabelPreview}
+            {activeFilterCount > 2 ? ` +${activeFilterCount - 2} flere` : ""}
           </div>
         </div>
       )}

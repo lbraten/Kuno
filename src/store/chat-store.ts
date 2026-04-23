@@ -82,28 +82,43 @@ interface ChatState {
 }
 
 const CHAT_CACHE_KEY = "kuno-chat-cache-v1";
-const CHAT_CACHE_VERSION = 4;
+const CHAT_CACHE_VERSION = 5;
 
 type PersistedChatState = {
   conversations?: Conversation[];
   currentConversationId?: string | null;
   messages?: Message[];
-  filter?: Partial<Filter>;
+  filter?: Partial<Filter> & { scope?: unknown; scopes?: unknown };
   mode?: Mode;
   retrieveConfig?: RetrieveConfig;
 };
 
 const DEFAULT_FILTER: Filter = {
-  scope: "all",
+  scopes: ["all"],
 };
 
-function normalizeScope(scope: unknown): DataScope {
-  return isDataScope(scope) ? scope : "all";
+function normalizeScopes(scopes: unknown, legacyScope?: unknown): DataScope[] {
+  const candidates = [
+    ...(Array.isArray(scopes) ? scopes : []),
+    ...(isDataScope(scopes) ? [scopes] : []),
+    ...(legacyScope !== undefined ? [legacyScope] : []),
+  ];
+
+  const validScopes = candidates
+    .map((value) => (isDataScope(value) ? value : null))
+    .filter((value): value is DataScope => Boolean(value));
+
+  if (validScopes.length === 0) return ["all"];
+  if (validScopes.includes("all")) return ["all"];
+
+  return Array.from(new Set(validScopes));
 }
 
-function normalizeFilter(filter?: Partial<Filter>): Filter {
+function normalizeFilter(
+  filter?: Partial<Filter> & { scope?: unknown; scopes?: unknown }
+): Filter {
   return {
-    scope: normalizeScope(filter?.scope),
+    scopes: normalizeScopes(filter?.scopes, filter?.scope),
   };
 }
 
@@ -152,7 +167,7 @@ function migrateChatCacheState(
     };
   }
 
-  if (version < 4) {
+  if (version < 5) {
     return {
       ...base,
       filter: normalizeFilter(base.filter),
@@ -300,7 +315,7 @@ export const useChatStore = create<ChatState>()(
               history: messages
                 .filter((m) => m.role === "user" || m.role === "assistant")
                 .map((m) => ({ role: m.role, content: m.content })),
-              scope: filter.scope,
+              scopes: filter.scopes,
             }),
             signal: controller.signal,
           });
