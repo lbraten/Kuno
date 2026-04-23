@@ -18,6 +18,24 @@ import {
   mockDocTypes,
 } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import type { DataScope } from "@/types";
+
+const SCOPE_OPTIONS: Array<{
+  value: DataScope;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "all",
+    label: "Alle rapporter",
+    description: "Bruk hele kunnskapsgrunnlaget i blob-indexen.",
+  },
+  {
+    value: "elevundersokelsen",
+    label: "Kun Elevundersokelsen",
+    description: "Begrens svarene til dokumenter som matcher Elevundersokelsen.",
+  },
+];
 
 export function Filters() {
   const { filter, setFilter } = useChatStore();
@@ -44,12 +62,24 @@ export function Filters() {
     setFilter({ docTypes });
   };
 
+  const setScope = (scope: DataScope) => {
+    setFilter({ scope });
+  };
+
   const clearFilters = () => {
-    setFilter({ organizations: [], years: [], docTypes: [] });
+    setFilter({
+      organizations: [],
+      years: [],
+      docTypes: [],
+      scope: "all",
+    });
   };
 
   const activeFilterCount =
-    filter.organizations.length + filter.years.length + filter.docTypes.length;
+    filter.organizations.length +
+    filter.years.length +
+    filter.docTypes.length +
+    (filter.scope === "all" ? 0 : 1);
 
   return (
     <div className="space-y-2">
@@ -78,6 +108,29 @@ export function Filters() {
           </DialogHeader>
 
           <div className="space-y-6 mt-4">
+            <div>
+              <h4 className="font-medium mb-3">Datagrunnlag</h4>
+              <div className="grid gap-2">
+                {SCOPE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setScope(option.value)}
+                    className={cn(
+                      "w-full rounded-lg border p-3 text-left transition-colors",
+                      filter.scope === option.value
+                        ? "border-primary/70 bg-primary/10"
+                        : "border-input hover:bg-secondary/40"
+                    )}
+                    aria-pressed={filter.scope === option.value}
+                  >
+                    <p className="text-sm font-medium">{option.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{option.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Organizations */}
             <div>
               <h4 className="font-medium mb-3">Virksomheter</h4>
@@ -154,6 +207,11 @@ export function Filters() {
       {/* Active filters preview */}
       {activeFilterCount > 0 && (
         <div className="space-y-1">
+          {filter.scope !== "all" && (
+            <div className="text-xs bg-secondary text-secondary-foreground border border-secondary/60 px-2 py-1 rounded truncate">
+              Scope: Kun Elevundersokelsen
+            </div>
+          )}
           {filter.organizations.slice(0, 2).map((org) => (
             <div
               key={org}

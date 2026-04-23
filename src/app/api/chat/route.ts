@@ -20,9 +20,19 @@ const INTERNAL_URL_HOST_PATTERNS = [
 
 type AnswerBasis = "grounded" | "general" | "blocked";
 
+type ScopeId = "all" | "elevundersokelsen";
+
+type ScopeConfig = {
+  id: ScopeId;
+  label: string;
+  includeTerms: string[];
+  searchFilter?: string;
+};
+
 type ChatRequestBody = {
   message?: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
+  scope?: ScopeId | string;
 };
 
 type Uncertainty = "low" | "medium" | "high";
@@ -43,6 +53,101 @@ type SearchMetadataConfig = {
   fileNameField: string;
   urlField: string;
 };
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function parseCsvEnv(value: string | undefined): string[] {
+  if (!value) return [];
+
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function resolveScopeId(scope: unknown): ScopeId {
+  if (typeof scope !== "string") return "all";
+
+  const normalized = normalizeText(scope).replace(/\s+/g, "");
+  return normalized === "elevundersokelsen" || normalized === "elevundersokelse"
+    ? "elevundersokelsen"
+    : "all";
+}
+
+function getScopeConfig(scopeId: ScopeId): ScopeConfig {
+  if (scopeId === "all") {
+    return {
+      id: "all",
+      label: "Alle rapporter",
+      includeTerms: [],
+    };
+  }
+
+  const envTerms = parseCsvEnv(process.env.KUNO_SCOPE_ELEV_TERMS);
+  const includeTerms =
+    envTerms.length > 0
+      ? envTerms
+      : ["elevundersokelsen", "elevundersokelse"];
+  const searchFilter = process.env.KUNO_SCOPE_ELEV_SEARCH_FILTER?.trim();
+
+  return {
+    id: "elevundersokelsen",
+    label: "Elevundersokelsen",
+    includeTerms,
+    searchFilter: searchFilter || undefined,
+  };
+}
+
+function buildScopeInstruction(scope: ScopeConfig): string | null {
+  if (scope.id === "all") return null;
+
+  const terms = scope.includeTerms
+    .map((term) => term.trim())
+    .filter(Boolean)
+    .join(", ");
+
+  return [
+    `Datagrunnlag: ${scope.label}.`,
+    "Bruk kun kilder som matcher valgt datagrunnlag.",
+    terms
+      ? `Behandle disse termene som inkluderingskrav: ${terms}.`
+      : null,
+    "Hvis du ikke finner relevante kilder i valgt datagrunnlag, si tydelig fra om dette.",
+    "Ikke bruk eller oppgi kilder utenfor valgt datagrunnlag.",
+  ]
+    .filter((item): item is string => Boolean(item))
+    .join(" ");
+}
+
+function citationMatchesScope(citation: Citation, scope: ScopeConfig): boolean {
+  if (scope.id === "all") return true;
+  if (scope.includeTerms.length === 0) return true;
+
+  const haystack = normalizeText(
+    [citation.title, citation.url, citation.chunkId, citation.docType]
+      .filter((value): value is string => Boolean(value))
+      .join(" ")
+  );
+
+  return scope.includeTerms.some((term) => {
+    const normalizedTerm = normalizeText(term);
+    return Boolean(normalizedTerm) && haystack.includes(normalizedTerm);
+  });
+}
+
+function filterCitationsByScope(
+  citations: Citation[],
+  scope: ScopeConfig
+): Citation[] {
+  if (scope.id === "all") return citations;
+  return citations.filter((citation) => citationMatchesScope(citation, scope));
+}
 
 function getUncertaintyFromFilters(filters?: ContentFilterResults): Uncertainty {
   if (!filters) return "low";
@@ -265,6 +370,7 @@ async function runAgentConversation(params: {
   agentApiVersion: string;
   history: Array<{ role: "user" | "assistant"; content: string }>;
   message: string;
+  scopeInstruction: string | null;
 }) {
   const {
     endpoint,
@@ -273,8 +379,13 @@ async function runAgentConversation(params: {
     agentApiVersion,
     history,
     message,
+    scopeInstruction,
   } = params;
   const cleanEndpoint = endpoint.replace(/\/$/, "");
+
+  const scopedMessage = scopeInstruction
+    ? `${scopeInstruction}\n\nBrukersporsmal: ${message}`
+    : message;
 
   const thread = await fetchJson<{ id: string }>(
     `${cleanEndpoint}/openai/threads?api-version=${agentApiVersion}`,
@@ -287,7 +398,7 @@ async function runAgentConversation(params: {
 
   const additionalMessages = [
     ...history.map((item) => ({ role: item.role, content: item.content })),
-    { role: "user" as const, content: message },
+    { role: "user" as const, content: scopedMessage },
   ];
 
   const run = await fetchJson<{ id: string; status?: string }>(
@@ -388,6 +499,7 @@ async function runDeploymentChat(params: {
   useAppSystemPrompt: boolean;
   history: Array<{ role: "user" | "assistant"; content: string }>;
   message: string;
+  scopeInstruction: string | null;
 }) {
   const {
     endpoint,
@@ -398,6 +510,7 @@ async function runDeploymentChat(params: {
     useAppSystemPrompt,
     history,
     message,
+    scopeInstruction,
   } = params;
   const cleanEndpoint = endpoint.replace(/\/$/, "");
   const url =
@@ -411,6 +524,9 @@ async function runDeploymentChat(params: {
   }> = [
     ...(useAppSystemPrompt
       ? [{ role: "system" as const, content: DEFAULT_SYSTEM_PROMPT }]
+      : []),
+    ...(scopeInstruction
+      ? [{ role: "system" as const, content: scopeInstruction }]
       : []),
     ...history,
     { role: "user", content: message },
@@ -456,11 +572,14 @@ async function runDeploymentChat(params: {
 function buildProjectInput(
   history: Array<{ role: "user" | "assistant"; content: string }>,
   message: string,
-  options?: { includePolicy?: boolean }
+  options?: { includePolicy?: boolean; scopeInstruction?: string | null }
 ) {
   // The Foundry agent controls response behavior; app forwards conversation only.
-  void options;
-  const turns = [...history, { role: "user" as const, content: message }];
+  void options?.includePolicy;
+  const scopedMessage = options?.scopeInstruction
+    ? `${options.scopeInstruction}\n\nBrukersporsmal: ${message}`
+    : message;
+  const turns = [...history, { role: "user" as const, content: scopedMessage }];
 
   const conversation = turns
     .map((turn) => `${turn.role === "assistant" ? "Assistent" : "Bruker"}: ${turn.content}`)
@@ -575,16 +694,16 @@ function isUsablePublicSourceUrl(url?: string): boolean {
   }
 }
 
-  function isBlobStorageUrl(url?: string): boolean {
-    if (!url) return false;
+function isBlobStorageUrl(url?: string): boolean {
+  if (!url) return false;
 
-    try {
-      const parsed = new URL(url);
-      return parsed.hostname.toLowerCase().endsWith(".blob.core.windows.net");
-    } catch {
-      return false;
-    }
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.toLowerCase().endsWith(".blob.core.windows.net");
+  } catch {
+    return false;
   }
+}
 
 function titleFromUrl(url: string): string {
   try {
@@ -623,18 +742,27 @@ async function searchMetadataLookup(params: {
   config: SearchMetadataConfig;
   query: string;
   top?: number;
+  searchFilter?: string;
 }) {
-  const { config, query, top = 5 } = params;
+  const { config, query, top = 5, searchFilter } = params;
   const cleanEndpoint = config.endpoint.replace(/\/$/, "");
   const url = `${cleanEndpoint}/indexes/${encodeURIComponent(
     config.indexName
   )}/docs/search?api-version=${config.apiVersion}`;
 
-  const requestBody = {
+  const requestBody: {
+    search: string;
+    top: number;
+    select: string;
+    filter?: string;
+  } = {
     search: query,
     top,
     select: [config.idField, config.fileNameField, config.urlField].join(","),
   };
+  if (searchFilter?.trim()) {
+    requestBody.filter = searchFilter.trim();
+  }
 
   const response = await fetch(url, {
     method: "POST",
@@ -656,22 +784,33 @@ async function searchMetadataLookup(params: {
   const errorText = await response.text();
   const invalidSelectFieldError =
     response.status === 400 && errorText.includes("$select");
+  const invalidFilterError =
+    response.status === 400 && errorText.includes("$filter");
 
-  if (!invalidSelectFieldError) {
+  if (!invalidSelectFieldError && !invalidFilterError) {
     throw new Error(errorText || `Search metadata lookup failed (${response.status})`);
   }
 
-  // Retry without select when configured field names don't exist in this index.
+  // Retry without select and/or filter when configured query fields don't exist.
+  const fallbackRequestBody: {
+    search: string;
+    top: number;
+    filter?: string;
+  } = {
+    search: query,
+    top,
+  };
+  if (!invalidFilterError && requestBody.filter) {
+    fallbackRequestBody.filter = requestBody.filter;
+  }
+
   const fallbackResponse = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "api-key": config.apiKey,
     },
-    body: JSON.stringify({
-      search: query,
-      top,
-    }),
+    body: JSON.stringify(fallbackRequestBody),
   });
 
   if (!fallbackResponse.ok) {
@@ -711,8 +850,9 @@ async function resolveCitationsFromSearchMetadata(params: {
   }>;
   userMessage: string;
   config: SearchMetadataConfig;
+  scope: ScopeConfig;
 }) {
-  const { annotations, userMessage, config } = params;
+  const { annotations, userMessage, config, scope } = params;
 
   const terms = new Set<string>();
 
@@ -739,6 +879,7 @@ async function resolveCitationsFromSearchMetadata(params: {
         config,
         query: term,
         top: 5,
+        searchFilter: scope.searchFilter,
       });
 
       for (const hit of hits) {
@@ -766,27 +907,34 @@ async function resolveCitationsFromSearchMetadata(params: {
         if (citationByUrl.has(url)) continue;
 
         const isPubliclyReachable = await isReachableUrl(url);
-          const keepViaProxy = isBlobStorageUrl(url);
+        const keepViaProxy = isBlobStorageUrl(url);
         if (!isPubliclyReachable) {
           inaccessibleUrlCount += 1;
         }
 
-        citationByUrl.set(url, {
+        const candidateCitation: Citation = {
           id: `src-${citationByUrl.size + 1}`,
           title: fileName,
-            url: isPubliclyReachable || keepViaProxy ? url : undefined,
+          url: isPubliclyReachable || keepViaProxy ? url : undefined,
           docType: url.toLowerCase().includes(".pdf")
             ? isPubliclyReachable
               ? "PDF"
-                : keepViaProxy
-                  ? "PDF (via app)"
-                  : "PDF (ikke offentlig)"
+              : keepViaProxy
+                ? "PDF (via app)"
+                : "PDF (ikke offentlig)"
             : isPubliclyReachable
               ? "URL"
-                : keepViaProxy
-                  ? "URL (via app)"
-                  : "URL (ikke offentlig)",
+              : keepViaProxy
+                ? "URL (via app)"
+                : "URL (ikke offentlig)",
           chunkId: url,
+        };
+
+        if (!citationMatchesScope(candidateCitation, scope)) continue;
+
+        citationByUrl.set(url, {
+          ...candidateCitation,
+          id: `src-${citationByUrl.size + 1}`,
         });
       }
     } catch (error) {
@@ -816,6 +964,8 @@ async function runProjectAgentConversation(params: {
   useProjectInputPolicy: boolean;
   allowTextUrlCitationFallback: boolean;
   searchMetadataConfig: SearchMetadataConfig | null;
+  scope: ScopeConfig;
+  scopeInstruction: string | null;
   history: Array<{ role: "user" | "assistant"; content: string }>;
   message: string;
 }) {
@@ -827,6 +977,8 @@ async function runProjectAgentConversation(params: {
     useProjectInputPolicy,
     allowTextUrlCitationFallback,
     searchMetadataConfig,
+    scope,
+    scopeInstruction,
     history,
     message,
   } = params;
@@ -841,6 +993,7 @@ async function runProjectAgentConversation(params: {
     body: JSON.stringify({
       input: buildProjectInput(history, message, {
         includePolicy: useProjectInputPolicy,
+        scopeInstruction,
       }),
       agent_reference: {
         type: "agent_reference",
@@ -893,8 +1046,11 @@ async function runProjectAgentConversation(params: {
     chunkId: annotation.url ?? annotation.file_id,
   }));
 
-  const usableAnnotationCitations = annotationCitations.filter((citation) =>
+  const publicAnnotationCitations = annotationCitations.filter((citation) =>
     isUsablePublicSourceUrl(citation.url ?? citation.chunkId)
+  );
+  const scopedAnnotationCitations = publicAnnotationCitations.filter((citation) =>
+    citationMatchesScope(citation, scope)
   );
 
   const rawContentText =
@@ -904,35 +1060,46 @@ async function runProjectAgentConversation(params: {
   const contentText = stripInlineSourcePlaceholders(rawContentText);
 
   const verifiedUrlCitations =
-    allowTextUrlCitationFallback && usableAnnotationCitations.length === 0
-      ? await buildVerifiedUrlCitations(contentText)
+    allowTextUrlCitationFallback && scopedAnnotationCitations.length === 0
+      ? (await buildVerifiedUrlCitations(contentText)).filter((citation) =>
+          citationMatchesScope(citation, scope)
+        )
       : [];
 
   const searchMetadataCitations =
-    usableAnnotationCitations.length === 0 && searchMetadataConfig
+    scopedAnnotationCitations.length === 0 && searchMetadataConfig
       ? await resolveCitationsFromSearchMetadata({
           annotations,
           userMessage: message,
           config: searchMetadataConfig,
+          scope,
         })
       : [];
 
   const citationsWithFallback =
-    usableAnnotationCitations.length > 0
-      ? usableAnnotationCitations
+    scopedAnnotationCitations.length > 0
+      ? scopedAnnotationCitations
       : searchMetadataCitations.length > 0
         ? searchMetadataCitations
         : verifiedUrlCitations;
 
   const filteredAnnotationCitationCount =
-    annotationCitations.length - usableAnnotationCitations.length;
+    annotationCitations.length - scopedAnnotationCitations.length;
+  const nonPublicAnnotationCitationCount =
+    annotationCitations.length - publicAnnotationCitations.length;
+  const outOfScopeAnnotationCitationCount =
+    publicAnnotationCitations.length - scopedAnnotationCitations.length;
 
   if (filteredAnnotationCitationCount > 0) {
     logChatEvent("warn", "project.annotation_citations_filtered", {
       agentName,
       annotationCitations: annotationCitations.length,
-      usableAnnotationCitations: usableAnnotationCitations.length,
+      publicAnnotationCitations: publicAnnotationCitations.length,
+      scopedAnnotationCitations: scopedAnnotationCitations.length,
       filteredAnnotationCitationCount,
+      nonPublicAnnotationCitationCount,
+      outOfScopeAnnotationCitationCount,
+      scope: scope.id,
     });
   }
 
@@ -947,10 +1114,14 @@ async function runProjectAgentConversation(params: {
       mode: "project",
       agentName,
       agentVersion: agentVersion ?? null,
+      scope: scope.id,
       annotations: annotations.length,
       annotationCitations: annotationCitations.length,
-      usableAnnotationCitations: usableAnnotationCitations.length,
+      publicAnnotationCitations: publicAnnotationCitations.length,
+      scopedAnnotationCitations: scopedAnnotationCitations.length,
       filteredAnnotationCitationCount,
+      nonPublicAnnotationCitationCount,
+      outOfScopeAnnotationCitationCount,
       searchMetadataCitations: searchMetadataCitations.length,
       verifiedUrlCitations: verifiedUrlCitations.length,
       fallbackEnabled: allowTextUrlCitationFallback,
@@ -1041,6 +1212,10 @@ export async function POST(request: Request) {
       );
     }
 
+    const scopeId = resolveScopeId(body.scope);
+    const scopeConfig = getScopeConfig(scopeId);
+    const scopeInstruction = buildScopeInstruction(scopeConfig);
+
     const foundryConfig = getFoundryConfig();
 
     const {
@@ -1092,6 +1267,9 @@ export async function POST(request: Request) {
       allowTextUrlCitationFallback,
       useAppSystemPrompt,
       useProjectInputPolicy,
+      scope: scopeConfig.id,
+      scopeSearchFilterEnabled: Boolean(scopeConfig.searchFilter),
+      scopeTermCount: scopeConfig.includeTerms.length,
       historyCount: history.length,
       messageLength: userMessage.length,
     });
@@ -1108,22 +1286,49 @@ export async function POST(request: Request) {
           useProjectInputPolicy,
           allowTextUrlCitationFallback,
           searchMetadataConfig,
+          scope: scopeConfig,
+          scopeInstruction,
           history,
           message: userMessage,
         });
 
+        const scopedProjectCitations = filterCitationsByScope(
+          projectAgentResult.citations,
+          scopeConfig
+        );
+        const filteredByScopeCount =
+          projectAgentResult.citations.length - scopedProjectCitations.length;
+        const normalizedProjectResult = {
+          ...projectAgentResult,
+          citations: scopedProjectCitations,
+          answerBasis: (scopedProjectCitations.length > 0
+            ? "grounded"
+            : "general") as AnswerBasis,
+        };
+
+        if (filteredByScopeCount > 0) {
+          logChatEvent("warn", "project.response_scope_filtered", {
+            scope: scopeConfig.id,
+            citationsBeforeScopeFilter: projectAgentResult.citations.length,
+            citationsAfterScopeFilter: scopedProjectCitations.length,
+            filteredByScopeCount,
+          });
+        }
+
         logChatEvent("info", "project.response", {
-          answerBasis: projectAgentResult.answerBasis,
-          citationCount: projectAgentResult.citations.length,
-          diagnostics: projectAgentResult.diagnostics,
+          answerBasis: normalizedProjectResult.answerBasis,
+          citationCount: normalizedProjectResult.citations.length,
+          scope: scopeConfig.id,
+          diagnostics: normalizedProjectResult.diagnostics,
         });
 
-        if (requireGroundedOnly && projectAgentResult.citations.length === 0) {
+        if (requireGroundedOnly && normalizedProjectResult.citations.length === 0) {
           const debug = {
             reason: "grounded_only_no_citations",
             mode,
             projectAgentName,
-            diagnostics: projectAgentResult.diagnostics,
+            scope: scopeConfig.id,
+            diagnostics: normalizedProjectResult.diagnostics,
           };
 
           logChatEvent("warn", "response.blocked", debug);
@@ -1133,13 +1338,14 @@ export async function POST(request: Request) {
           );
         }
 
-        return NextResponse.json(projectAgentResult);
+        return NextResponse.json(normalizedProjectResult);
       } catch (error) {
         agentError = toErrorMessage(error);
 
         logChatEvent("error", "project.call_failed", {
           mode,
           projectAgentName,
+          scope: scopeConfig.id,
           error: agentError,
         });
 
@@ -1155,6 +1361,7 @@ export async function POST(request: Request) {
                       reason: "project_call_failed_obo_auth_mismatch",
                       mode,
                       projectAgentName,
+                      scope: scopeConfig.id,
                     },
                   }
                 : {}),
@@ -1169,6 +1376,7 @@ export async function POST(request: Request) {
             projectAgentName,
             strictProjectToolAuth,
             fallback: "deployment",
+            scope: scopeConfig.id,
           });
         }
       }
@@ -1198,6 +1406,7 @@ export async function POST(request: Request) {
                     reason: "project_call_failed",
                     mode,
                     projectAgentName,
+                    scope: scopeConfig.id,
                   },
                 }
               : {}),
@@ -1214,14 +1423,36 @@ export async function POST(request: Request) {
           agentApiVersion,
           history,
           message: userMessage,
+          scopeInstruction,
         });
 
-        if (requireGroundedOnly && agentResult.citations.length === 0) {
+        const scopedAgentCitations = filterCitationsByScope(
+          agentResult.citations,
+          scopeConfig
+        );
+        const scopedAgentResult = {
+          ...agentResult,
+          citations: scopedAgentCitations,
+          answerBasis: (scopedAgentCitations.length > 0
+            ? "grounded"
+            : "general") as AnswerBasis,
+        };
+
+        if (scopedAgentCitations.length !== agentResult.citations.length) {
+          logChatEvent("warn", "assistant.response_scope_filtered", {
+            scope: scopeConfig.id,
+            citationsBeforeScopeFilter: agentResult.citations.length,
+            citationsAfterScopeFilter: scopedAgentCitations.length,
+          });
+        }
+
+        if (requireGroundedOnly && scopedAgentResult.citations.length === 0) {
           const debug = {
             reason: "grounded_only_no_citations",
             mode,
             agentId,
-            citationCount: agentResult.citations.length,
+            scope: scopeConfig.id,
+            citationCount: scopedAgentResult.citations.length,
           };
 
           logChatEvent("warn", "response.blocked", debug);
@@ -1231,13 +1462,14 @@ export async function POST(request: Request) {
           );
         }
 
-        return NextResponse.json(agentResult);
+        return NextResponse.json(scopedAgentResult);
       } catch (error) {
         agentError = toErrorMessage(error);
 
         logChatEvent("error", "assistant.call_failed", {
           mode,
           agentId,
+          scope: scopeConfig.id,
           error: agentError,
         });
 
@@ -1258,6 +1490,7 @@ export async function POST(request: Request) {
                     reason: "assistant_call_failed",
                     mode,
                     agentId,
+                    scope: scopeConfig.id,
                   },
                 }
               : {}),
@@ -1287,6 +1520,7 @@ export async function POST(request: Request) {
       useAppSystemPrompt,
       history,
       message: userMessage,
+      scopeInstruction,
     });
 
     if (requireGroundedOnly && completionResult.citations.length === 0) {
@@ -1294,6 +1528,7 @@ export async function POST(request: Request) {
         reason: "grounded_only_no_citations",
         mode,
         deployment,
+        scope: scopeConfig.id,
         citationCount: completionResult.citations.length,
       };
 

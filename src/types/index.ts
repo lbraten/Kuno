@@ -30,10 +30,13 @@ export interface Conversation {
   messages: Message[];
 }
 
+export type DataScope = "all" | "elevundersokelsen";
+
 export interface Filter {
   organizations: string[];
   years: number[];
   docTypes: string[];
+  scope: DataScope;
 }
 
 export type Mode = "chat" | "retrieve" | "advanced";

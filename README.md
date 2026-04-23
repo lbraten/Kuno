@@ -19,6 +19,8 @@ Den fungerer med mock-data out-of-the-box, og kan kobles til Azure AI Foundry vi
     - `AZURE_OPENAI_API_KEY`
     - `AZURE_OPENAI_DEPLOYMENT`
     - `AZURE_OPENAI_API_VERSION` (valgfritt, standard er `2024-10-21`)
+    - `KUNO_SCOPE_ELEV_TERMS` (valgfritt, kommaseparerte trefford for scope "Kun Elevundersokelsen")
+    - `KUNO_SCOPE_ELEV_SEARCH_FILTER` (valgfritt, OData-filter sendt til Azure AI Search metadata-oppslag)
 3. Start appen med `npm run dev`.
 4. Send en melding i chatten. Frontend kaller da `POST /api/chat`, som videresender sikkert til Foundry.
 
@@ -53,6 +55,7 @@ Den fungerer med mock-data out-of-the-box, og kan kobles til Azure AI Foundry vi
 - Mock kilder med relevans-score
 - Usikkerhetsindikatorer (lav/middels/høy)
 - Filtre (virksomhet, år, dokumenttype)
+- Scope-filter for datagrunnlag (Alle rapporter / Kun Elevundersokelsen)
 - Tre modi: Chat, Søk, Avansert
 - Historikk med samtaler
 - Light/Dark/System tema

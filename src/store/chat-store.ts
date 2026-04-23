@@ -4,6 +4,7 @@ import {
   Message,
   Conversation,
   Filter,
+  DataScope,
   Mode,
   RetrieveConfig,
   Citation,
@@ -80,16 +81,42 @@ interface ChatState {
 }
 
 const CHAT_CACHE_KEY = "kuno-chat-cache-v1";
-const CHAT_CACHE_VERSION = 2;
+const CHAT_CACHE_VERSION = 3;
 
 type PersistedChatState = {
   conversations?: Conversation[];
   currentConversationId?: string | null;
   messages?: Message[];
-  filter?: Filter;
+  filter?: Partial<Filter>;
   mode?: Mode;
   retrieveConfig?: RetrieveConfig;
 };
+
+const DEFAULT_FILTER: Filter = {
+  organizations: [],
+  years: [],
+  docTypes: [],
+  scope: "all",
+};
+
+function normalizeScope(scope: unknown): DataScope {
+  return scope === "elevundersokelsen" ? "elevundersokelsen" : "all";
+}
+
+function normalizeFilter(filter?: Partial<Filter>): Filter {
+  return {
+    organizations: Array.isArray(filter?.organizations)
+      ? filter.organizations.filter((value): value is string => typeof value === "string")
+      : [],
+    years: Array.isArray(filter?.years)
+      ? filter.years.filter((value): value is number => typeof value === "number")
+      : [],
+    docTypes: Array.isArray(filter?.docTypes)
+      ? filter.docTypes.filter((value): value is string => typeof value === "string")
+      : [],
+    scope: normalizeScope(filter?.scope),
+  };
+}
 
 function isConversation(value: unknown): value is Conversation {
   if (!value || typeof value !== "object") return false;
@@ -130,13 +157,23 @@ function migrateChatCacheState(
       conversations: sortedConversations,
       currentConversationId,
       messages: selectedConversation?.messages ?? [],
-      filter: base.filter ?? { organizations: [], years: [], docTypes: [] },
+      filter: normalizeFilter(base.filter),
       mode: base.mode ?? "chat",
       retrieveConfig: base.retrieveConfig ?? { topK: 5, minScore: 0.7 },
     };
   }
 
-  return base;
+  if (version < 3) {
+    return {
+      ...base,
+      filter: normalizeFilter(base.filter),
+    };
+  }
+
+  return {
+    ...base,
+    filter: normalizeFilter(base.filter),
+  };
 }
 
 function sortConversationsByUpdatedAt(conversations: Conversation[]): Conversation[] {
@@ -168,11 +205,7 @@ export const useChatStore = create<ChatState>()(
       currentConversationId: null,
       messages: [],
       isStreaming: false,
-      filter: {
-        organizations: [],
-        years: [],
-        docTypes: [],
-      },
+      filter: DEFAULT_FILTER,
       mode: "chat",
       retrieveConfig: {
         topK: 5,
@@ -211,7 +244,7 @@ export const useChatStore = create<ChatState>()(
       },
 
       sendMessage: async (content: string) => {
-        let { currentConversationId, conversations, messages } = get();
+        let { currentConversationId, conversations, messages, filter } = get();
 
         if (!currentConversationId) {
           const now = new Date().toISOString();
@@ -278,6 +311,7 @@ export const useChatStore = create<ChatState>()(
               history: messages
                 .filter((m) => m.role === "user" || m.role === "assistant")
                 .map((m) => ({ role: m.role, content: m.content })),
+              scope: filter.scope,
             }),
             signal: controller.signal,
           });
@@ -399,7 +433,9 @@ export const useChatStore = create<ChatState>()(
       },
 
       setFilter: (filter: Partial<Filter>) => {
-        set((state) => ({ filter: { ...state.filter, ...filter } }));
+        set((state) => ({
+          filter: normalizeFilter({ ...state.filter, ...filter }),
+        }));
       },
 
       setMode: (mode: Mode) => {
