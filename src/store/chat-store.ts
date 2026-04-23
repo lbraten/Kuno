@@ -14,6 +14,7 @@ import {
   mockAssistantResponses,
   mockFollowUps,
 } from "@/lib/mock-data";
+import { isDataScope } from "@/lib/data-scopes";
 import { sleep } from "@/lib/utils";
 
 type Uncertainty = "low" | "medium" | "high";
@@ -81,7 +82,7 @@ interface ChatState {
 }
 
 const CHAT_CACHE_KEY = "kuno-chat-cache-v1";
-const CHAT_CACHE_VERSION = 3;
+const CHAT_CACHE_VERSION = 4;
 
 type PersistedChatState = {
   conversations?: Conversation[];
@@ -93,27 +94,15 @@ type PersistedChatState = {
 };
 
 const DEFAULT_FILTER: Filter = {
-  organizations: [],
-  years: [],
-  docTypes: [],
   scope: "all",
 };
 
 function normalizeScope(scope: unknown): DataScope {
-  return scope === "elevundersokelsen" ? "elevundersokelsen" : "all";
+  return isDataScope(scope) ? scope : "all";
 }
 
 function normalizeFilter(filter?: Partial<Filter>): Filter {
   return {
-    organizations: Array.isArray(filter?.organizations)
-      ? filter.organizations.filter((value): value is string => typeof value === "string")
-      : [],
-    years: Array.isArray(filter?.years)
-      ? filter.years.filter((value): value is number => typeof value === "number")
-      : [],
-    docTypes: Array.isArray(filter?.docTypes)
-      ? filter.docTypes.filter((value): value is string => typeof value === "string")
-      : [],
     scope: normalizeScope(filter?.scope),
   };
 }
@@ -163,7 +152,7 @@ function migrateChatCacheState(
     };
   }
 
-  if (version < 3) {
+  if (version < 4) {
     return {
       ...base,
       filter: normalizeFilter(base.filter),

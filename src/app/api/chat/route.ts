@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { DATA_SCOPE_DEFINITIONS, isDataScope } from "@/lib/data-scopes";
+import type { DataScope } from "@/types";
 
 type Citation = {
   id: string;
@@ -20,7 +22,8 @@ const INTERNAL_URL_HOST_PATTERNS = [
 
 type AnswerBasis = "grounded" | "general" | "blocked";
 
-type ScopeId = "all" | "elevundersokelsen";
+type ScopeId = DataScope;
+type ThematicScopeId = Exclude<ScopeId, "all">;
 
 type ScopeConfig = {
   id: ScopeId;
@@ -71,13 +74,50 @@ function parseCsvEnv(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+function normalizeScopeToken(value: string): string {
+  return normalizeText(value).replace(/[\s_-]+/g, "");
+}
+
+function buildScopeAliasMap(): Map<string, ScopeId> {
+  const aliasMap = new Map<string, ScopeId>();
+
+  const registerAlias = (alias: string, scopeId: ScopeId) => {
+    const key = normalizeScopeToken(alias);
+    if (!key) return;
+    aliasMap.set(key, scopeId);
+  };
+
+  registerAlias("all", "all");
+  registerAlias("alle rapporter", "all");
+
+  for (const definition of Object.values(DATA_SCOPE_DEFINITIONS)) {
+    registerAlias(definition.id, definition.id);
+    registerAlias(definition.label, definition.id);
+
+    for (const term of definition.includeTerms) {
+      registerAlias(term, definition.id);
+    }
+
+    for (const alias of definition.aliases ?? []) {
+      registerAlias(alias, definition.id);
+    }
+  }
+
+  return aliasMap;
+}
+
+const SCOPE_ALIAS_MAP = buildScopeAliasMap();
+
 function resolveScopeId(scope: unknown): ScopeId {
+  if (isDataScope(scope)) return scope;
   if (typeof scope !== "string") return "all";
 
-  const normalized = normalizeText(scope).replace(/\s+/g, "");
-  return normalized === "elevundersokelsen" || normalized === "elevundersokelse"
-    ? "elevundersokelsen"
-    : "all";
+  const normalizedScope = normalizeScopeToken(scope);
+  return SCOPE_ALIAS_MAP.get(normalizedScope) ?? "all";
+}
+
+function getScopeEnvPrefix(scopeId: ThematicScopeId): string {
+  return `KUNO_SCOPE_${scopeId.toUpperCase().replace(/-/g, "_")}`;
 }
 
 function getScopeConfig(scopeId: ScopeId): ScopeConfig {
@@ -89,16 +129,32 @@ function getScopeConfig(scopeId: ScopeId): ScopeConfig {
     };
   }
 
-  const envTerms = parseCsvEnv(process.env.KUNO_SCOPE_ELEV_TERMS);
+  const definition = DATA_SCOPE_DEFINITIONS[scopeId];
+  const envPrefix = getScopeEnvPrefix(scopeId);
+  const envTerms = parseCsvEnv(process.env[`${envPrefix}_TERMS`]);
+  const envSearchFilter = process.env[`${envPrefix}_SEARCH_FILTER`]?.trim();
+
+  // Backward-compatible support for previous Elevundersokelsen env var names.
+  const legacyTerms =
+    scopeId === "elevundersokelsen"
+      ? parseCsvEnv(process.env.KUNO_SCOPE_ELEV_TERMS)
+      : [];
+  const legacySearchFilter =
+    scopeId === "elevundersokelsen"
+      ? process.env.KUNO_SCOPE_ELEV_SEARCH_FILTER?.trim()
+      : undefined;
+
   const includeTerms =
     envTerms.length > 0
       ? envTerms
-      : ["elevundersokelsen", "elevundersokelse"];
-  const searchFilter = process.env.KUNO_SCOPE_ELEV_SEARCH_FILTER?.trim();
+      : legacyTerms.length > 0
+        ? legacyTerms
+        : definition.includeTerms;
+  const searchFilter = envSearchFilter || legacySearchFilter;
 
   return {
-    id: "elevundersokelsen",
-    label: "Elevundersokelsen",
+    id: definition.id,
+    label: definition.label,
     includeTerms,
     searchFilter: searchFilter || undefined,
   };

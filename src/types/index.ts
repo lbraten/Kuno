@@ -30,12 +30,23 @@ export interface Conversation {
   messages: Message[];
 }
 
-export type DataScope = "all" | "elevundersokelsen";
+export type DataScope =
+  | "all"
+  | "elevundersokelsen"
+  | "laererundersokelser"
+  | "skolelederundersokelser"
+  | "foreldreundersokelser"
+  | "tiltaksevalueringer"
+  | "laereplananalyse"
+  | "mobbing-og-psykososialt-miljo"
+  | "frafalls-og-gjennomforingsstudier"
+  | "kompetanseutvikling"
+  | "barnehageforskning"
+  | "minoritetsperspektiv"
+  | "digitalisering-og-teknologi"
+  | "spesialundervisning-og-tilpasset-opplaering";
 
 export interface Filter {
-  organizations: string[];
-  years: number[];
-  docTypes: string[];
   scope: DataScope;
 }
 
