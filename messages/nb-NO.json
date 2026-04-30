@@ -25,15 +25,15 @@
   "modes": {
     "chat": {
       "label": "Chat",
-      "description": "Samtale med kontekstuell forståelse"
+      "description": "Få hjelp til å finne og oppsummere relevante forskningsrapporter"
     },
     "retrieve": {
-      "label": "Søk",
-      "description": "Finn relevante dokumenter"
+      "label": "Språkvask",
+      "description": "Skriv om teksten din basert på Udirs språkprofil"
     },
     "advanced": {
-      "label": "Avansert",
-      "description": "Finjuster søk og innstillinger"
+      "label": "Pressesvar",
+      "description": "Lag svar tilpasset presse og offentlig kommunikasjon"
     }
   }
 }

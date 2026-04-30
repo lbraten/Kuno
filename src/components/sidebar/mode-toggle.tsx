@@ -12,16 +12,16 @@ const modes: { value: Mode; label: string; icon: any; description: string }[] =
       value: "chat",
       label: "Chat",
       icon: MessageSquare,
-      description: "Samtale med kontekstuell forståelse",
+      description: "Skriv meldinger og få svar fra Kuno",
     },
     {
-      value: "retrieve",
-      label: "Søk",
+      value: "retrieve", //her het den søk før, så valuen må endres fra retrieve til søk for ryddighet
+      label: "Språkvask",
       icon: FileSearch,
-      description: "Finn relevante dokumenter",
+      description: "Skriv om teksten din bassert på udir sin språkprofil",
     },
     {
-      value: "advanced",
+      value: "advanced", //her må noe annet komme, Øyvind hadde noen ideer
       label: "Avansert",
       icon: Sparkles,
       description: "Finjuster søk og innstillinger",

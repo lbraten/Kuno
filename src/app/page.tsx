@@ -69,14 +69,14 @@ export default function Home() {
   const comingSoonContent =
     mode === "retrieve"
       ? {
-          title: "Søk-agent",
-          subtitle: "Søk er ikke utviklet ennå.",
+          title: "Språkvask",
+          subtitle: "Språkvask er ikke utviklet ennå.",
           hint: "Bytt tilbake til Chat for å skrive meldinger.",
           Icon: Search,
         }
       : {
-          title: "Avansert søk",
-          subtitle: "Avansert søk er ikke utviklet ennå.",
+          title: "Pressesvar",
+          subtitle: "Pressesvar er ikke utviklet ennå.",
           hint: "Bytt tilbake til Chat for å skrive meldinger.",
           Icon: SlidersHorizontal,
         };
