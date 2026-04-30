@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { SVGProps, useEffect, useRef } from "react";
 import { DemoBanner } from "@/components/layout/demo-banner";
 import { TopBar } from "@/components/layout/top-bar";
 import { SidePanel } from "@/components/layout/side-panel";
@@ -19,7 +19,7 @@ import { CommandPalette } from "@/components/command-palette";
 import { useChatStore } from "@/store/chat-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PanelRightOpen, Search, Send, SlidersHorizontal } from "lucide-react";
+import { PanelRightOpen, Search, Send, SlidersHorizontal, SquareIcon } from "lucide-react";
 import { useUIStore } from "@/store/ui-store";
 import { SettingsDialog } from "@/components/layout/settings-dialog";
 import Image from "next/image";
@@ -64,6 +64,48 @@ export default function Home() {
     body.classList.toggle("a11y-strong-focus", accessibility.strongFocus);
   }, [accessibility]);
 
+function MessagesSquareIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" />
+    </svg>
+  );
+}
+
+function BubblesIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M7.001 15.085A1.5 1.5 0 0 1 9 16.5" />
+      <circle cx="18.5" cy="8.5" r="3.5" />
+      <circle cx="7.5" cy="16.5" r="5.5" />
+      <circle cx="7.5" cy="4.5" r="2.5" />
+    </svg>
+  );
+}
+
   const hasMessages = messages.length > 0;
   const isComingSoonMode = mode === "retrieve" || mode === "advanced";
   const comingSoonContent =
@@ -72,13 +114,13 @@ export default function Home() {
           title: "Språkvask",
           subtitle: "Språkvask er ikke utviklet ennå.",
           hint: "Bytt tilbake til Chat for å skrive meldinger.",
-          Icon: Search,
+          Icon: BubblesIcon,
         }
       : {
           title: "Pressesvar",
           subtitle: "Pressesvar er ikke utviklet ennå.",
           hint: "Bytt tilbake til Chat for å skrive meldinger.",
-          Icon: SlidersHorizontal,
+          Icon: MessagesSquareIcon,
         };
 
   return (

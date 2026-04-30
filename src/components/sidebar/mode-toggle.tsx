@@ -3,8 +3,51 @@
 import { useChatStore } from "@/store/chat-store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MessageSquare, FileSearch, Sparkles } from "lucide-react";
+import type { SVGProps } from "react";
+import { MessageSquare } from "lucide-react";
 import { Mode } from "@/types";
+
+function BubblesIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M7.001 15.085A1.5 1.5 0 0 1 9 16.5" />
+      <circle cx="18.5" cy="8.5" r="3.5" />
+      <circle cx="7.5" cy="16.5" r="5.5" />
+      <circle cx="7.5" cy="4.5" r="2.5" />
+    </svg>
+  );
+}
+
+function MessagesSquareIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" />
+    </svg>
+  );
+}
 
 const modes: { value: Mode; label: string; icon: any; description: string }[] =
   [
@@ -12,19 +55,19 @@ const modes: { value: Mode; label: string; icon: any; description: string }[] =
       value: "chat",
       label: "Chat",
       icon: MessageSquare,
-      description: "Skriv meldinger og få svar fra Kuno",
+      description: "Få hjelp til å finne og oppsummere relevante forskningsrapporter",
     },
     {
       value: "retrieve", //her het den søk før, så valuen må endres fra retrieve til søk for ryddighet
       label: "Språkvask",
-      icon: FileSearch,
-      description: "Skriv om teksten din bassert på udir sin språkprofil",
+      icon: BubblesIcon,
+      description: "Skriv om teksten din basert på Udirs språkprofil",
     },
     {
-      value: "advanced", //her må noe annet komme, Øyvind hadde noen ideer
-      label: "Avansert",
-      icon: Sparkles,
-      description: "Finjuster søk og innstillinger",
+      value: "advanced",
+      label: "Pressesvar",
+      icon: MessagesSquareIcon,
+      description: "Lag svar tilpasset presse og offentlig kommunikasjon",
     },
   ];
 
